@@ -411,6 +411,10 @@ with tab3:
                 time.sleep(0.8)
                 progress_bar.progress(100)
 
+                # CRITICAL: Set seed for reproducibility
+                # This ensures identical results for same data/parameters
+                np.random.seed(42)
+
                 # Split data
                 pre_data = data[data['date'] < intervention_date].copy()
                 post_data = data[data['date'] >= intervention_date].copy()
@@ -451,7 +455,10 @@ with tab3:
                 residual_std = np.std(y_pre - model.predict(X_pre))
                 ci_width = 1.96 * residual_std
 
-                # Store results
+                # Store results with cache key to ensure reproducibility
+                # Cache key includes intervention date and confidence level
+                cache_key = f"{intervention_date}_{confidence_level}"
+
                 st.session_state['results'] = {
                     'pre_data': pre_data,
                     'post_data': post_data,
@@ -463,7 +470,11 @@ with tab3:
                     'total_effect': np.sum(point_effect),
                     'avg_effect': np.mean(point_effect),
                     'relative_effect': (np.mean(point_effect) / np.mean(counterfactual)) * 100,
-                    'intervention_date': intervention_date
+                    'intervention_date': intervention_date,
+                    'cache_key': cache_key,
+                    'confidence_level': confidence_level,
+                    'include_seasonality': include_seasonality,
+                    'include_trend': include_trend
                 }
 
                 status_text.text("✅ Analysis complete!")
