@@ -268,56 +268,95 @@ with tab2:
     else:
         data = st.session_state['data']
 
-        # Intervention date selection
-        st.markdown("#### 📍 Intervention Date")
-        st.markdown("Select the date when your campaign/intervention started:")
+        # Campaign date selection
+        st.markdown("#### 📍 Campaign Dates")
+        st.markdown("Define when your campaign started and ended:")
 
         # Visual timeline
         min_date = data['date'].min().date()
         max_date = data['date'].max().date()
 
-        intervention_date = st.date_input(
-            "Intervention Start Date",
-            value=st.session_state.get('intervention_date', min_date + (max_date - min_date) / 2).date() if isinstance(st.session_state.get('intervention_date'), pd.Timestamp) else st.session_state.get('intervention_date', min_date + (max_date - min_date) / 2),
-            min_value=min_date,
-            max_value=max_date,
-            help="The date when your campaign/intervention began"
-        )
-
-        st.session_state['intervention_date'] = pd.to_datetime(intervention_date)
-
-        # Show pre/post split
-        st.markdown("---")
-        st.markdown("#### 📊 Data Split Visualisation")
-
-        # Calculate periods
-        pre_data = data[data['date'] < pd.to_datetime(intervention_date)]
-        post_data = data[data['date'] >= pd.to_datetime(intervention_date)]
-
         col1, col2 = st.columns(2)
 
         with col1:
+            campaign_start = st.date_input(
+                "Campaign Start Date",
+                value=st.session_state.get('intervention_date', min_date + (max_date - min_date) / 3).date() if isinstance(st.session_state.get('intervention_date'), pd.Timestamp) else st.session_state.get('intervention_date', min_date + (max_date - min_date) / 3),
+                min_value=min_date,
+                max_value=max_date,
+                help="The date when your campaign began"
+            )
+
+        with col2:
+            # Default campaign end to 30 days after start
+            default_end = campaign_start + timedelta(days=30)
+            if default_end > max_date:
+                default_end = max_date
+
+            campaign_end = st.date_input(
+                "Campaign End Date",
+                value=st.session_state.get('campaign_end_date', default_end).date() if isinstance(st.session_state.get('campaign_end_date'), pd.Timestamp) else st.session_state.get('campaign_end_date', default_end),
+                min_value=campaign_start,
+                max_value=max_date,
+                help="The date when your campaign ended"
+            )
+
+        st.session_state['intervention_date'] = pd.to_datetime(campaign_start)
+        st.session_state['campaign_end_date'] = pd.to_datetime(campaign_end)
+
+        # Show campaign periods
+        st.markdown("---")
+        st.markdown("#### 📊 Campaign Period Breakdown")
+
+        # Calculate periods
+        pre_campaign = data[data['date'] < pd.to_datetime(campaign_start)]
+        campaign_period = data[(data['date'] >= pd.to_datetime(campaign_start)) & (data['date'] <= pd.to_datetime(campaign_end))]
+
+        # 90-day measurement window after campaign end
+        measurement_end = pd.to_datetime(campaign_end) + timedelta(days=90)
+        measurement_window = data[(data['date'] > pd.to_datetime(campaign_end)) & (data['date'] <= measurement_end)]
+
+        # Store measurement window end
+        st.session_state['measurement_end_date'] = measurement_end
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
             st.markdown(f"""
-            <div style='background: linear-gradient(135deg, rgba(0,0,0,0.05) 0%, rgba(0,255,0,0.05) 100%);
+            <div style='background: linear-gradient(135deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.08) 100%);
                         padding: 1.5rem; border-radius: 10px; border-left: 4px solid #666;'>
-                <h4 style='color: #666; margin-top: 0;'>📅 Pre-Intervention Period</h4>
-                <p style='font-size: 1.8rem; font-weight: bold; color: #666; margin: 0.5rem 0;'>{len(pre_data)}</p>
+                <h4 style='color: #666; margin-top: 0;'>📅 Pre-Campaign</h4>
+                <p style='font-size: 1.8rem; font-weight: bold; color: #666; margin: 0.5rem 0;'>{len(pre_campaign)}</p>
                 <p style='color: #888; margin: 0;'>data points</p>
                 <p style='color: #888; font-size: 0.9rem; margin-top: 0.5rem;'>
-                    {pre_data['date'].min().strftime('%Y-%m-%d')} to {pre_data['date'].max().strftime('%Y-%m-%d')}
+                    {pre_campaign['date'].min().strftime('%Y-%m-%d')} to {pre_campaign['date'].max().strftime('%Y-%m-%d')}
                 </p>
             </div>
             """, unsafe_allow_html=True)
 
         with col2:
+            campaign_days = (pd.to_datetime(campaign_end) - pd.to_datetime(campaign_start)).days + 1
+            st.markdown(f"""
+            <div style='background: linear-gradient(135deg, rgba(255,165,0,0.1) 0%, rgba(255,165,0,0.15) 100%);
+                        padding: 1.5rem; border-radius: 10px; border-left: 4px solid #FFA500;'>
+                <h4 style='color: #FFA500; margin-top: 0;'>📢 Campaign Period</h4>
+                <p style='font-size: 1.8rem; font-weight: bold; color: #FFA500; margin: 0.5rem 0;'>{len(campaign_period)}</p>
+                <p style='color: #888; margin: 0;'>data points ({campaign_days} days)</p>
+                <p style='color: #888; font-size: 0.9rem; margin-top: 0.5rem;'>
+                    {campaign_start.strftime('%Y-%m-%d')} to {campaign_end.strftime('%Y-%m-%d')}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col3:
             st.markdown(f"""
             <div style='background: linear-gradient(135deg, rgba(0,255,0,0.05) 0%, rgba(0,255,0,0.1) 100%);
                         padding: 1.5rem; border-radius: 10px; border-left: 4px solid {BRAND_COLORS['primary']};'>
-                <h4 style='color: {BRAND_COLORS['primary']}; margin-top: 0;'>🚀 Post-Intervention Period</h4>
-                <p style='font-size: 1.8rem; font-weight: bold; color: {BRAND_COLORS['primary']}; margin: 0.5rem 0;'>{len(post_data)}</p>
-                <p style='color: #666; margin: 0;'>data points</p>
+                <h4 style='color: {BRAND_COLORS['primary']}; margin-top: 0;'>📈 90-Day Measurement</h4>
+                <p style='font-size: 1.8rem; font-weight: bold; color: {BRAND_COLORS['primary']}; margin: 0.5rem 0;'>{len(measurement_window)}</p>
+                <p style='color: #666; margin: 0;'>data points (post-campaign)</p>
                 <p style='color: #666; font-size: 0.9rem; margin-top: 0.5rem;'>
-                    {post_data['date'].min().strftime('%Y-%m-%d')} to {post_data['date'].max().strftime('%Y-%m-%d')}
+                    {(pd.to_datetime(campaign_end) + timedelta(days=1)).strftime('%Y-%m-%d')} to {measurement_end.strftime('%Y-%m-%d')}
                 </p>
             </div>
             """, unsafe_allow_html=True)
@@ -326,38 +365,50 @@ with tab2:
         st.markdown("---")
         st.markdown("#### ✅ Data Quality Check")
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
-            if len(pre_data) >= 30:
-                st.success(f"✅ Pre-period sufficient ({len(pre_data)} points ≥ 30 minimum)")
+            if len(pre_campaign) >= 30:
+                st.success(f"✅ Pre-campaign sufficient ({len(pre_campaign)} points ≥ 30)")
             else:
-                st.error(f"❌ Pre-period too short ({len(pre_data)} points < 30 minimum)")
+                st.error(f"❌ Pre-campaign too short ({len(pre_campaign)} points < 30)")
 
         with col2:
-            if len(post_data) >= 1:
-                st.success(f"✅ Post-period valid ({len(post_data)} points)")
+            if len(campaign_period) >= 1:
+                st.success(f"✅ Campaign period valid ({len(campaign_period)} points)")
             else:
-                st.error(f"❌ No post-intervention data available")
+                st.error(f"❌ No campaign data available")
 
-        # Intervention Configuration Table
+        with col3:
+            if len(measurement_window) >= 30:
+                st.success(f"✅ Measurement window sufficient ({len(measurement_window)} points)")
+            elif len(measurement_window) > 0:
+                st.warning(f"⚠️ Measurement window short ({len(measurement_window)} points)")
+            else:
+                st.error(f"❌ No measurement window data available")
+
+        # Campaign Configuration Table
         st.markdown("---")
-        st.markdown("#### 📋 Intervention Configuration Summary")
+        st.markdown("#### 📋 Campaign Analysis Configuration")
 
         config_df = pd.DataFrame({
             'Parameter': [
-                'Intervention Date',
-                'Pre-Intervention Period',
-                'Post-Intervention Period',
+                'Campaign Start Date',
+                'Campaign End Date',
+                'Campaign Duration',
+                'Pre-Campaign Period',
+                'Measurement Window (90 days post-campaign)',
                 'Total Data Points',
                 'Confidence Level',
                 'Include Seasonality',
                 'Include Trend'
             ],
             'Value': [
-                pd.to_datetime(intervention_date).strftime('%Y-%m-%d'),
-                f"{len(pre_data)} data points ({pre_data['date'].min().strftime('%Y-%m-%d')} to {pre_data['date'].max().strftime('%Y-%m-%d')})",
-                f"{len(post_data)} data points ({post_data['date'].min().strftime('%Y-%m-%d')} to {post_data['date'].max().strftime('%Y-%m-%d')})",
+                campaign_start.strftime('%Y-%m-%d'),
+                campaign_end.strftime('%Y-%m-%d'),
+                f"{campaign_days} days",
+                f"{len(pre_campaign)} data points ({pre_campaign['date'].min().strftime('%Y-%m-%d')} to {pre_campaign['date'].max().strftime('%Y-%m-%d')})",
+                f"{len(measurement_window)} data points ({(pd.to_datetime(campaign_end) + timedelta(days=1)).strftime('%Y-%m-%d')} to {measurement_end.strftime('%Y-%m-%d')})",
                 f"{len(data)} data points",
                 f"{confidence_level}%",
                 "Yes" if include_seasonality else "No",
@@ -368,20 +419,24 @@ with tab2:
         st.dataframe(config_df, use_container_width=True, hide_index=True)
 
 with tab3:
-    st.markdown("### 📊 Analysis Results")
+    st.markdown("### 📊 Campaign Impact Analysis Results")
 
     if 'data' not in st.session_state:
         st.warning("⚠️ Please upload data and configure analysis first.")
     elif 'intervention_date' not in st.session_state:
-        st.warning("⚠️ Please configure your intervention date in the 'Configure Analysis' tab.")
+        st.warning("⚠️ Please configure your campaign dates in the 'Configure Analysis' tab.")
+    elif 'campaign_end_date' not in st.session_state:
+        st.warning("⚠️ Please configure your campaign end date in the 'Configure Analysis' tab.")
     else:
         st.markdown("---")
 
-        if st.button("🚀 Run Causal Impact Analysis", type="primary", use_container_width=True):
+        if st.button("🚀 Run Campaign Impact Analysis", type="primary", use_container_width=True):
 
-            # Get data
+            # Get data and campaign dates
             data = st.session_state['data'].copy()
-            intervention_date = pd.to_datetime(st.session_state['intervention_date'])
+            campaign_start = pd.to_datetime(st.session_state['intervention_date'])
+            campaign_end = pd.to_datetime(st.session_state['campaign_end_date'])
+            measurement_end = campaign_end + timedelta(days=90)
 
             # Show analysis in progress
             with st.spinner("🔄 Running Bayesian analysis..."):
@@ -415,19 +470,23 @@ with tab3:
                 # This ensures identical results for same data/parameters
                 np.random.seed(42)
 
-                # Split data
-                pre_data = data[data['date'] < intervention_date].copy()
-                post_data = data[data['date'] >= intervention_date].copy()
+                # Split data for campaign analysis
+                # Pre-campaign: used for building counterfactual model
+                pre_data = data[data['date'] < campaign_start].copy()
+
+                # Measurement window: 90 days AFTER campaign end
+                # This is the key change - we only measure post-campaign uplift
+                measurement_data = data[(data['date'] > campaign_end) & (data['date'] <= measurement_end)].copy()
 
                 # Simplified BSTS-style prediction (demonstration)
                 # In production, use actual causalimpact package
                 from sklearn.linear_model import LinearRegression
 
-                # Fit trend + seasonality model on pre-period
+                # Fit trend + seasonality model on pre-campaign period
                 pre_data['t'] = np.arange(len(pre_data))
                 pre_data['day_of_week'] = pre_data['date'].dt.dayofweek
                 pre_data['sin_week'] = np.sin(2 * np.pi * pre_data['t'] / 7)
-                pre_data['cos_week'] = np.cos(2 * np.pi * pre_data['t'] / 7)
+                pre_data['cos_week'] = np.sin(2 * np.pi * pre_data['t'] / 7)
 
                 # Fit model
                 X_pre = pre_data[['t', 'sin_week', 'cos_week']].values
@@ -436,17 +495,18 @@ with tab3:
                 model = LinearRegression()
                 model.fit(X_pre, y_pre)
 
-                # Predict counterfactual for post-period
-                post_data['t'] = np.arange(len(pre_data), len(pre_data) + len(post_data))
-                post_data['day_of_week'] = post_data['date'].dt.dayofweek
-                post_data['sin_week'] = np.sin(2 * np.pi * post_data['t'] / 7)
-                post_data['cos_week'] = np.cos(2 * np.pi * post_data['t'] / 7)
+                # Predict counterfactual for 90-day measurement window
+                measurement_data['t'] = np.arange(len(pre_data) + (campaign_end - campaign_start).days + 1,
+                                                  len(pre_data) + (campaign_end - campaign_start).days + 1 + len(measurement_data))
+                measurement_data['day_of_week'] = measurement_data['date'].dt.dayofweek
+                measurement_data['sin_week'] = np.sin(2 * np.pi * measurement_data['t'] / 7)
+                measurement_data['cos_week'] = np.cos(2 * np.pi * measurement_data['t'] / 7)
 
-                X_post = post_data[['t', 'sin_week', 'cos_week']].values
-                counterfactual = model.predict(X_post)
+                X_measurement = measurement_data[['t', 'sin_week', 'cos_week']].values
+                counterfactual = model.predict(X_measurement)
 
-                # Calculate effects
-                actual = post_data['y'].values
+                # Calculate effects (only for 90-day measurement window)
+                actual = measurement_data['y'].values
                 point_effect = actual - counterfactual
                 cumulative_effect = np.cumsum(point_effect)
 
@@ -456,12 +516,12 @@ with tab3:
                 ci_width = 1.96 * residual_std
 
                 # Store results with cache key to ensure reproducibility
-                # Cache key includes intervention date and confidence level
-                cache_key = f"{intervention_date}_{confidence_level}"
+                # Cache key includes campaign dates and confidence level
+                cache_key = f"{campaign_start}_{campaign_end}_{confidence_level}"
 
                 st.session_state['results'] = {
                     'pre_data': pre_data,
-                    'post_data': post_data,
+                    'post_data': measurement_data,  # 90-day measurement window
                     'actual': actual,
                     'counterfactual': counterfactual,
                     'point_effect': point_effect,
@@ -470,11 +530,15 @@ with tab3:
                     'total_effect': np.sum(point_effect),
                     'avg_effect': np.mean(point_effect),
                     'relative_effect': (np.mean(point_effect) / np.mean(counterfactual)) * 100,
-                    'intervention_date': intervention_date,
+                    'intervention_date': campaign_start,  # Campaign start
+                    'campaign_end_date': campaign_end,  # Campaign end
+                    'measurement_end_date': measurement_end,  # End of 90-day window
                     'cache_key': cache_key,
                     'confidence_level': confidence_level,
                     'include_seasonality': include_seasonality,
-                    'include_trend': include_trend
+                    'include_trend': include_trend,
+                    'campaign_days': (campaign_end - campaign_start).days + 1,
+                    'measurement_days': len(measurement_data)
                 }
 
                 status_text.text("✅ Analysis complete!")
@@ -486,42 +550,55 @@ with tab3:
         if 'results' in st.session_state:
             results = st.session_state['results']
 
-            st.success("✅ Causal Impact Analysis Complete!")
+            st.success("✅ Campaign Impact Analysis Complete!")
+
+            # Campaign summary banner
+            st.markdown(f"""
+            <div style='background: linear-gradient(135deg, rgba(0,255,0,0.05) 0%, rgba(0,255,0,0.1) 100%);
+                        padding: 1.5rem; border-radius: 10px; border-left: 5px solid {BRAND_COLORS['primary']}; margin-bottom: 2rem;'>
+                <h3 style='color: {BRAND_COLORS['primary']}; margin-top: 0;'>📢 Campaign Performance (90-Day Post-Campaign Window)</h3>
+                <p style='color: #666; margin: 0;'>
+                    Campaign Period: {results['intervention_date'].strftime('%Y-%m-%d')} to {results['campaign_end_date'].strftime('%Y-%m-%d')} ({results['campaign_days']} days)
+                </p>
+                <p style='color: #666; margin: 0;'>
+                    Measurement Window: {(results['campaign_end_date'] + timedelta(days=1)).strftime('%Y-%m-%d')} to {results['measurement_end_date'].strftime('%Y-%m-%d')} ({results['measurement_days']} days)
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
 
             # Summary metrics
-            st.markdown("---")
-            st.markdown("### 📈 Summary Statistics")
+            st.markdown("### 📈 Campaign Incremental Value")
 
             col1, col2, col3, col4 = st.columns(4)
 
             with col1:
                 st.metric(
-                    "Total Causal Impact",
+                    "Total Incremental Units",
                     f"{results['total_effect']:,.0f}",
-                    delta=f"{results['relative_effect']:.1f}% vs expected",
-                    help="Total incremental units attributed to intervention"
+                    delta=f"{results['relative_effect']:.1f}% uplift",
+                    help="Total incremental units generated in 90-day post-campaign window"
                 )
 
             with col2:
                 st.metric(
-                    "Average Daily Effect",
+                    "Daily Average Uplift",
                     f"{results['avg_effect']:,.0f}",
-                    help="Average daily incremental impact during post-period"
+                    help="Average daily incremental units during measurement window"
                 )
 
             with col3:
                 st.metric(
-                    "Relative Lift",
+                    "Campaign Uplift",
                     f"+{results['relative_effect']:.1f}%",
-                    help="Percentage increase vs. counterfactual prediction"
+                    help="Percentage increase vs. what would have happened without campaign"
                 )
 
             with col4:
                 prob_effect = 95  # Simplified - would come from MCMC in production
                 st.metric(
-                    "Probability of Effect",
+                    "Confidence",
                     f"{prob_effect}%",
-                    help="Probability that effect is real (not due to chance)"
+                    help="Probability that campaign drove real incremental value"
                 )
 
             # Detailed summary table
