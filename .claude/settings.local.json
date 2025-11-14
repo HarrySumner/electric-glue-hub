@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del \"c:\\Users\\harry\\OneDrive\\Desktop\\EG\\electric-glue-hub\\pages\\4_Marketing_Intelligence_OLD.py\")",
+      "Bash(dir /s /b c:UsersharryOneDriveDesktopEG*scout* 2)",
+      "Bash(nul)",
+      "Bash(git clone:*)",
+      "Bash(python test_causal_viz.py:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

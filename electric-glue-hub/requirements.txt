@@ -1,0 +1,11 @@
+# Core Dependencies
+streamlit>=1.30.0
+pandas>=2.0.0
+numpy>=1.24.0
+
+# LLM Integration (Optional - falls back to rule-based if not available)
+openai>=1.0.0
+anthropic>=0.8.0
+
+# Utilities
+python-dotenv>=1.0.0

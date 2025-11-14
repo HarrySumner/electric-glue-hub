@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone:*)",
+      "Bash(tree:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(git push)",
+      "Bash(\"C:\\Users\\harry\\OneDrive\\Desktop\\EG\\tv-campaign-impact-analyzer\\config\\__init__.py\")",
+      "Bash(project_structure.txt)",
+      "Bash(timeout 5 sleep:*)",
+      "Bash(ping:*)",
+      "Bash(nul)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
