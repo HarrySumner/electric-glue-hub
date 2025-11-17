@@ -17,6 +17,7 @@ from io import BytesIO
 sys.path.append(str(Path(__file__).parent.parent))
 
 from config.branding import apply_electric_glue_theme, BRAND_COLORS, format_header
+from config.qa_status import render_qa_traffic_light
 
 # Page config
 st.set_page_config(
@@ -97,6 +98,9 @@ with st.sidebar:
     confidence_level = st.slider("Confidence Level (%)", 80, 99, 95)
     include_seasonality = st.checkbox("Include Seasonality", value=True)
     include_trend = st.checkbox("Include Trend", value=True)
+
+# Render QA traffic light in sidebar
+render_qa_traffic_light(location="sidebar")
 
     st.markdown("---")
 

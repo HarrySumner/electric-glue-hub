@@ -7,7 +7,16 @@
       "Bash(git clone:*)",
       "Bash(python test_causal_viz.py:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(python scout/test_quality_system.py:*)",
+      "Bash(python agents/scout_research_agent.py:*)",
+      "Bash(python scout_research_agent.py:*)",
+      "Bash(python -c:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(test:*)",
+      "Bash(del \"C:\\Users\\harry\\OneDrive\\Desktop\\EG\\electric-glue-hub\\pages\\5_QA_Health_Monitor.py\")"
     ],
     "deny": [],
     "ask": []

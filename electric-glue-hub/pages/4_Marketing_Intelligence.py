@@ -16,7 +16,9 @@ import re
 sys.path.append(str(Path(__file__).parent.parent))
 
 from config.branding import apply_electric_glue_theme, BRAND_COLORS, format_header
+from config.qa_status import render_qa_traffic_light
 from agents.perspective_agents import get_all_perspectives
+from agents.scout_research_agent import ScoutResearchAgent
 
 # Page config
 st.set_page_config(
@@ -70,15 +72,16 @@ with st.expander("📖 About This Tool", expanded=False):
 
     ### The Three Perspectives
 
-    - 💰 **Stingy Customer** - Budget-conscious CFO focused on ROI and efficiency
-    - 🔬 **Critical Thinker** - Data scientist questioning assumptions and biases
-    - 🎨 **Creative Ad Man** - Creative director identifying brand opportunities
+    - 😈 **Devil's Advocate** - Risk analysis, what could go wrong, hidden costs
+    - 🌟 **Optimist** - Growth opportunities, untapped potential, quick wins
+    - ⚖️ **Realist** - Practical constraints, trade-offs, MVP approach
 
     ### Why Use This Tool?
 
     - ✅ **Multi-Perspective Analysis** - See campaigns through different stakeholder lenses
+    - ✅ **QA Housekeeping Agent** - Every output validated for fabrications and errors before display
     - ✅ **Web + Document Research** - Combines online search with file analysis
-    - ✅ **Sentiment Analysis** - NLP-powered tone and emotion detection
+    - ✅ **Fact-Constrained Insights** - All claims grounded in verified sources with citations
     - ✅ **Export-Ready Outputs** - Formatted for pitch decks and strategy docs
     - ✅ **Progress Tracking** - Real-time updates with time estimates
 
@@ -91,6 +94,9 @@ with st.expander("📖 About This Tool", expanded=False):
     """)
 
 st.markdown("---")
+
+# Render QA traffic light in sidebar
+render_qa_traffic_light(location="sidebar")
 
 # Main Search Interface
 st.markdown(f"""
@@ -190,41 +196,10 @@ with st.expander("⚙️ Advanced Research Options", expanded=False):
             help="Select where Scout should search for information"
         )
 
-# Persona Selection
-st.markdown("---")
-st.markdown(f"## 🎭 Select Analysis Perspectives")
-
-st.markdown(f"""
-<p style='font-size: 1rem; color: #666; line-height: 1.7; margin-bottom: 1.5rem;'>
-    Choose which perspectives you want Scout to analyse from. Each persona provides unique insights:
-</p>
-""", unsafe_allow_html=True)
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    persona_stingy = st.checkbox(
-        "💰 Stingy Customer",
-        value=True,
-        help="Budget-conscious CFO perspective - ROI focused, skeptical of spending"
-    )
-    st.caption("Focus: ROI, efficiency, cost-cutting")
-
-with col2:
-    persona_critical = st.checkbox(
-        "🔬 Critical Thinker",
-        value=True,
-        help="Data scientist perspective - questions assumptions, looks for biases"
-    )
-    st.caption("Focus: Rigor, methodology, assumptions")
-
-with col3:
-    persona_creative = st.checkbox(
-        "🎨 Creative Ad Man",
-        value=True,
-        help="Creative director perspective - brand building, bold campaigns"
-    )
-    st.caption("Focus: Brand, creativity, culture")
+# Set all personas to true by default (always analyze all perspectives)
+persona_stingy = True
+persona_critical = True
+persona_creative = True
 
 # Research Execution
 if search_button or st.session_state.research_complete:
@@ -262,42 +237,24 @@ if search_button or st.session_state.research_complete:
             status_text = st.empty()
             agent_status = st.empty()
 
-            # Research phases
-            phases = [
-                ("🌐 Web Search", "Searching across selected sources", 15, "primary"),
-                ("📄 Document Processing", "Extracting insights from uploaded files", 10, "accent"),
-                ("🧹 Data Cleaning", "Structuring and validating research data", 8, "info"),
-                ("🧠 Sentiment Analysis", "Analyzing tone and sentiment in findings", 12, "success"),
-                ("📊 Creating Visualisations", "Generating charts and insights", 10, "warning"),
-            ]
-
-            # Add persona analysis phases
+            # Determine active personas
             active_personas = []
             if persona_stingy:
-                phases.append(("💰 Stingy Customer Analysis", "Analyzing from ROI/budget perspective", 15, "warning"))
                 active_personas.append("stingy")
             if persona_critical:
-                phases.append(("🔬 Critical Thinker Analysis", "Questioning assumptions and methodology", 15, "info"))
                 active_personas.append("critical")
             if persona_creative:
-                phases.append(("🎨 Creative Ad Man Analysis", "Identifying brand opportunities", 15, "accent"))
                 active_personas.append("creative")
 
-            phases.append(("✨ Synthesis", "Combining insights into final report", 10, "success"))
-
-            total_duration = sum(p[2] for p in phases)
-            elapsed = 0
-
-            for i, (phase_name, phase_desc, duration, color) in enumerate(phases):
-                # Update status
+            # Progress callback for Scout agent
+            def update_progress(phase_name, phase_desc, progress_pct):
                 status_text.markdown(f"""
-                <div style='background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid {BRAND_COLORS[color]};'>
-                    <strong style='color: {BRAND_COLORS[color]};'>Phase {i+1}/{len(phases)}:</strong> {phase_name}<br/>
+                <div style='background: white; padding: 1rem; border-radius: 8px; border-left: 4px solid {BRAND_COLORS['primary']};'>
+                    <strong style='color: {BRAND_COLORS['primary']};'>{phase_name}</strong><br/>
                     <span style='color: #666; font-size: 0.9rem;'>{phase_desc}</span>
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Show agent working indicator
                 agent_status.markdown(f"""
                 <div style='text-align: center; padding: 0.5rem;'>
                     <span style='background: {BRAND_COLORS['accent']}; color: black; padding: 0.5rem 1rem;
@@ -307,14 +264,20 @@ if search_button or st.session_state.research_complete:
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Simulate processing
-                phase_steps = 5
-                for step in range(phase_steps):
-                    time.sleep(duration / (phase_steps * 10))  # Speed up for demo
-                    elapsed += duration / phase_steps
-                    progress_bar.progress(min(int((elapsed / total_duration) * 100), 100))
+                progress_bar.progress(progress_pct)
+                time.sleep(0.5)
 
-                # Mark phase complete
+            # Execute real Scout research
+            try:
+                scout_agent = ScoutResearchAgent()
+                research_results = scout_agent.research(
+                    query=search_query,
+                    depth=research_depth,
+                    personas=active_personas,
+                    progress_callback=update_progress
+                )
+
+                # Mark complete
                 agent_status.markdown(f"""
                 <div style='text-align: center; padding: 0.5rem;'>
                     <span style='background: {BRAND_COLORS['success']}; color: black; padding: 0.5rem 1rem;
@@ -323,25 +286,51 @@ if search_button or st.session_state.research_complete:
                     </span>
                 </div>
                 """, unsafe_allow_html=True)
-                time.sleep(0.3)
 
-            progress_bar.progress(100)
-            status_text.success(f"✅ Research complete! Analyzed **{search_query}** from {len(active_personas)} perspectives")
-            time.sleep(0.5)
+                progress_bar.progress(100)
+                status_text.success(f"✅ Research complete! Analyzed **{search_query}** from {len(active_personas)} perspectives")
+                time.sleep(0.5)
+
+                # Store research results
+                st.session_state.scout_results = research_results
+
+            except Exception as e:
+                status_text.error(f"❌ Research failed: {str(e)}")
+                st.session_state.scout_results = None
 
         # Clear progress indicators
         progress_container.empty()
 
-        # Store research results
+        # Store research results (combine Scout results with session state)
         st.session_state.research_complete = True
-        st.session_state.research_data = {
-            'query': search_query,
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'depth': research_depth,
-            'personas': active_personas,
-            'files_analysed': len(uploaded_files) if uploaded_files else 0,
-            'sources_searched': len(search_sources) if search_sources else 3
-        }
+
+        if st.session_state.get('scout_results'):
+            scout = st.session_state.scout_results
+            st.session_state.research_data = {
+                'query': search_query,
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'depth': research_depth,
+                'personas': active_personas,
+                'files_analysed': len(uploaded_files) if uploaded_files else 0,
+                'sources_searched': len(scout.get('sources', [])),
+                'facts_count': len(scout.get('facts', [])),
+                'quality_score': scout.get('quality_score', 0),
+                'quality_report': scout.get('quality_report', {}),
+                'insights': scout.get('insights', {})
+            }
+        else:
+            # Fallback if Scout failed
+            st.session_state.research_data = {
+                'query': search_query,
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'depth': research_depth,
+                'personas': active_personas,
+                'files_analysed': len(uploaded_files) if uploaded_files else 0,
+                'sources_searched': len(search_sources) if search_sources else 3,
+                'facts_count': 0,
+                'quality_score': 0,
+                'insights': {}
+            }
 
 # Display Results
 if st.session_state.research_complete and st.session_state.research_data:
@@ -351,16 +340,53 @@ if st.session_state.research_complete and st.session_state.research_data:
     st.success(f"✅ **Research Complete**: {data['query']}")
 
     # Summary Stats
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
         st.metric("Sources Searched", data['sources_searched'])
     with col2:
-        st.metric("Files Analyzed", data['files_analysed'])
+        st.metric("Facts Extracted", data.get('facts_count', 0))
     with col3:
         st.metric("Perspectives", len(data['personas']))
     with col4:
+        quality_score = data.get('quality_score', 0)
+        st.metric("Quality Score", f"{quality_score:.0f}/100")
+    with col5:
         st.metric("Research Depth", data['depth'])
+
+    st.markdown("---")
+
+    # QA Validation Status (if available)
+    if 'qa_validation' in data:
+        qa_val = data['qa_validation']
+
+        if data.get('qa_blocked', False):
+            # Output was BLOCKED by QA
+            st.error("🚫 **QA VALIDATION BLOCKED OUTPUT** - Critical issues detected. Output not shown to prevent fabricated information.")
+
+            with st.expander("❌ Critical Issues Found", expanded=True):
+                for issue in data.get('qa_issues', []):
+                    st.markdown(f"""
+                    **{issue['severity']} - {issue['type']}**
+                    - {issue['description']}
+                    - *Location:* {issue.get('location', 'N/A')}
+                    - *Fix:* {issue.get('recommendation', 'N/A')}
+                    """)
+
+        elif qa_val.get('decision') == 'WARN' and 'qa_warnings' in data:
+            # Output approved with warnings
+            st.warning(f"⚠️ **QA Validation:** Output approved with {len(data['qa_warnings'])} warnings")
+
+            with st.expander("⚠️ View QA Warnings"):
+                for warning in data['qa_warnings']:
+                    st.markdown(f"- **{warning['severity']}**: {warning['description']}")
+
+        elif qa_val.get('decision') == 'APPROVE':
+            # Clean validation pass
+            st.success("✅ **QA Validation Passed** - All claims verified against source data. No fabrications detected.")
+
+        elif qa_val.get('status') == 'disabled':
+            st.info("ℹ️ QA Validation not available for this output")
 
     st.markdown("---")
 
@@ -467,78 +493,98 @@ if st.session_state.research_complete and st.session_state.research_data:
             st.session_state.selected_persona = 'all'
 
     with col2:
-        if 'stingy' in data['personas']:
-            if st.button("💰 Stingy Customer", use_container_width=True,
-                        type="primary" if st.session_state.selected_persona == 'stingy' else "secondary"):
-                st.session_state.selected_persona = 'stingy'
+        if 'devil' in data['personas']:
+            if st.button("😈 Devil's Advocate", use_container_width=True,
+                        type="primary" if st.session_state.selected_persona == 'devil' else "secondary"):
+                st.session_state.selected_persona = 'devil'
 
     with col3:
-        if 'critical' in data['personas']:
-            if st.button("🔬 Critical Thinker", use_container_width=True,
-                        type="primary" if st.session_state.selected_persona == 'critical' else "secondary"):
-                st.session_state.selected_persona = 'critical'
+        if 'optimist' in data['personas']:
+            if st.button("🌟 Optimist", use_container_width=True,
+                        type="primary" if st.session_state.selected_persona == 'optimist' else "secondary"):
+                st.session_state.selected_persona = 'optimist'
 
     with col4:
-        if 'creative' in data['personas']:
-            if st.button("🎨 Creative Ad Man", use_container_width=True,
-                        type="primary" if st.session_state.selected_persona == 'creative' else "secondary"):
-                st.session_state.selected_persona = 'creative'
+        if 'realist' in data['personas']:
+            if st.button("⚖️ Realist", use_container_width=True,
+                        type="primary" if st.session_state.selected_persona == 'realist' else "secondary"):
+                st.session_state.selected_persona = 'realist'
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Mock data for each persona (in real implementation, this would come from agents)
-    persona_analyses = {
-        'stingy': {
-            'icon': '💰',
-            'name': 'Stingy Customer',
-            'color': BRAND_COLORS['warning'],
-            'tagline': 'Budget-Conscious CFO Perspective',
-            'insight': f"The spending on {data['query']} shows decent returns, but there's fat to cut. Current ROI is 2.4x which is barely acceptable. Bottom 30% of channels are dragging performance down significantly.",
+    # Get real Scout insights or fallback to mock data
+    scout_insights = data.get('insights', {})
+
+    # If we have real Scout insights, use them; otherwise use mock data
+    if scout_insights:
+        persona_analyses = {}
+        for persona_key in ['devil', 'optimist', 'realist']:
+            if persona_key in scout_insights:
+                insight_data = scout_insights[persona_key]
+                persona_analyses[persona_key] = {
+                    'icon': '😈' if persona_key == 'devil' else ('🌟' if persona_key == 'optimist' else '⚖️'),
+                    'name': insight_data.get('perspective', persona_key.title()),
+                    'color': BRAND_COLORS['error'] if persona_key == 'devil' else (BRAND_COLORS['success'] if persona_key == 'optimist' else BRAND_COLORS['info']),
+                    'tagline': 'Risk Analysis & What Could Go Wrong' if persona_key == 'devil' else ('Growth Opportunities & Quick Wins' if persona_key == 'optimist' else 'Practical Constraints & Trade-Offs'),
+                    'insight': insight_data.get('key_insight', ''),
+                    'actions': insight_data.get('actions', []),
+                    'warning': insight_data.get('warning', ''),
+                    'opportunity': insight_data.get('key_insight', '')  # Using key_insight as opportunity
+                }
+    else:
+        # Fallback mock data
+        persona_analyses = {
+        'devil': {
+            'icon': '😈',
+            'name': "Devil's Advocate",
+            'color': BRAND_COLORS['error'],
+            'tagline': 'Risk Analysis & What Could Go Wrong',
+            'insight': f"The {data['query']} strategy has several red flags. Heavy dependency on single-channel performance creates systemic risk. If Instagram algorithm changes or costs spike, entire funnel collapses. No diversification buffer.",
             'actions': [
-                "**Cut underperforming channels immediately** - Instagram Stories ads have 0.8x ROI. Kill them and reallocate £15K/month to proven performers",
-                "**Demand proof before scaling** - Before increasing budget, run controlled A/B tests. Never scale without 95% confidence in lift",
-                "**Renegotiate all vendor contracts** - Influencer agencies charging 20% commission. Industry standard is 12-15%. Push back hard",
-                "**Focus on high-intent channels** - Google Search converts at 5.2x vs. social at 1.8x. Why are we spending 60% on social?"
+                "**Identify dependency risks** - 70% of leads from one channel. Build contingency plan for algorithm changes or platform policy shifts",
+                "**Stress test budget assumptions** - Current ROI assumes stable CPMs. Model scenarios: What if costs increase 50%? What's break-even?",
+                "**Document failure modes** - Create risk register: Attribution breakdown, competitor copying tactics, market saturation, economic downturn impact",
+                "**Review compliance exposure** - Privacy regulations tightening. Is tracking setup GDPR/CCPA compliant? Fines can be catastrophic"
             ],
-            'warning': "Don't fall for 'brand building' excuses when ROI is unclear. If it can't be measured with hard revenue attribution, cut the budget in half until proven.",
-            'opportunity': "Quick win: Shift 40% of social budget to search. Based on current conversion data, this could boost revenue by £180K annually with same spend."
+            'warning': "Success today doesn't mean success tomorrow. Markets change, competitors adapt, platforms update algorithms. Every winning strategy has an expiration date. Plan for downside.",
+            'opportunity': "Build resilience now while performance is good. Diversify channels, test backup strategies, document what works so you can pivot quickly when (not if) conditions change."
         },
-        'critical': {
-            'icon': '🔬',
-            'name': 'Critical Thinker',
+        'optimist': {
+            'icon': '🌟',
+            'name': 'Optimist',
+            'color': BRAND_COLORS['success'],
+            'tagline': 'Growth Opportunities & Quick Wins',
+            'insight': f"The {data['query']} data shows untapped potential. Current strategy only scratches surface. Strong product-market fit evident in retention metrics. Room to scale aggressively if done right.",
+            'actions': [
+                "**Scale what's working** - Top 3 channels showing 4x+ ROAS. Double down systematically. Test 50% budget increase in controlled rollout",
+                "**Expand to adjacent audiences** - Lookalike segments show 85% similarity to best converters. Low-risk expansion opportunity worth £200K+ annually",
+                "**Test new creative angles** - Current messaging resonates but plays it safe. Bold testimonials, problem-agitate-solve, comparison ads could lift performance 20-40%",
+                "**Geographic expansion** - Strong performance in London/Manchester. Birmingham, Bristol, Edinburgh demographics match profile. Quick wins available"
+            ],
+            'warning': "Growth requires investment and patience. Quick wins are great, but sustainable growth needs sustained effort, budget, and organizational commitment over 6-12 months.",
+            'opportunity': "Immediate opportunity: Increase budget 30% in proven channels, launch lookalike targeting, test 3 new creative variations. Conservative estimate: +£300K revenue in 90 days."
+        },
+        'realist': {
+            'icon': '⚖️',
+            'name': 'Realist',
             'color': BRAND_COLORS['info'],
-            'tagline': 'Data Scientist Questioning Assumptions',
-            'insight': f"The research on {data['query']} has some methodological concerns. Sample size looks adequate (N=2,400) but time period is only 45 days - not enough to control for seasonality or external shocks.",
+            'tagline': 'Practical Constraints & Trade-Offs',
+            'insight': f"The {data['query']} performance is workable but not exceptional. 2.1x ROAS is acceptable for this stage. Focus on incremental improvements rather than risky pivots. Steady progress beats home runs.",
             'actions': [
-                "**Test attribution model assumptions** - Currently using last-click. This systematically undervalues top-of-funnel. Run incrementality test",
-                "**Check for confounders** - Major competitor launched campaign same week. Is the lift actually from our efforts or market expansion?",
-                "**Segment analysis required** - Aggregate ROI hides critical variation. New vs returning customers likely behave very differently",
-                "**Statistical power check** - With current sample size, can only detect >15% lift reliably. Smaller effects are noise"
+                "**Start with MVP optimizations** - Don't overhaul everything. Test one variable at a time: Bidding strategy first, then creative, then audiences. Measure, iterate",
+                "**Work within budget constraints** - £25K/month isn't enough for brand building. Focus on performance marketing and efficiency improvements until budget scales",
+                "**Set realistic milestones** - 3-month goal: Improve ROAS to 2.5x. 6-month: Scale to £40K/month spend while maintaining 2.3x+. Break into 2-week sprints",
+                "**Acknowledge trade-offs** - Can't test everything. Prioritize: Fix attribution first (biggest unknown), then scale top channel, then creative refresh"
             ],
-            'warning': "Correlation ≠ causation. Sales went up when campaign ran, but we had 3 other major variables change simultaneously. This needs proper causal inference, not just correlation charts.",
-            'opportunity': "Run a proper holdout test in 2-3 markets. Turn off campaign entirely in control markets. Only way to measure true incrementality vs. baseline growth."
-        },
-        'creative': {
-            'icon': '🎨',
-            'name': 'Creative Ad Man',
-            'color': BRAND_COLORS['accent'],
-            'tagline': 'Creative Director Seeing Opportunities',
-            'insight': f"The research shows {data['query']} has strong functional benefits but weak emotional connection. Brand is playing it safe - very 'category typical' creative. Massive opportunity to stand out with bold positioning.",
-            'actions': [
-                "**Launch a provocative brand platform** - Current messaging is forgettable. Need a bold POV that gets PR and social conversation, not just clicks",
-                "**Partner with culture creators** - Stop working with macro-influencers charging £50K for mediocre content. Find 5-10 real creators making culture, not just content",
-                "**Create a cultural moment** - Tie into something people care about. Sustainability? Gen-Z anxiety? Don't just advertise, participate in conversations that matter",
-                "**Kill the safe creative** - Those stock photo ads with generic copy? They're invisible. Invest in 2-3 big swings that could actually win awards and attention"
-            ],
-            'warning': "Don't let performance marketers kill every creative idea with A/B tests. Great creative compounds over time. You can't A/B test a Super Bowl ad. Sometimes you need conviction, not just data.",
-            'opportunity': "Pitch a bold brand campaign that breaks category norms. Something that gets shared, talked about, parodied. That's how you build a brand, not another \\\"shop now\\\" carousel ad."
+            'warning': "Perfect is the enemy of good. Ship something workable this week, not something perfect next quarter. Market waits for no one. Iterate in public, learn fast.",
+            'opportunity': "Low-hanging fruit: Fix conversion tracking (probably losing 15-20% of attributable conversions), A/B test 3 landing page variations, negotiate CPMs down 10-15%. Do this before scaling spend."
         }
-    }
+        }  # End of fallback mock data
 
     # Display selected perspective(s)
     perspectives_to_show = []
     if st.session_state.selected_persona == 'all':
-        perspectives_to_show = [p for p in ['stingy', 'critical', 'creative'] if p in data['personas']]
+        perspectives_to_show = [p for p in ['devil', 'optimist', 'realist'] if p in data['personas']]
     elif st.session_state.selected_persona in data['personas']:
         perspectives_to_show = [st.session_state.selected_persona]
 

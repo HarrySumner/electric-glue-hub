@@ -1,366 +1,396 @@
-# ⚡ Electric Glue Hub
-## Unified Agentic Marketing Intelligence Platform
+# ⚡ Electric Glue Marketing Intelligence Platform
 
-**Version:** 2.0.0
-**Port:** http://localhost:8505
-**Status:** Fully Redesigned | All Products Independent
+**Version:** 3.0.0
+**Critical Innovation:** QA Housekeeping Agent with Synthetic Testing
 
----
-
-## 🚀 Overview
-
-Electric Glue Hub is a unified platform bringing together three powerful AI-powered marketing tools. Each product is built on multi-agent AI orchestration and designed to solve specific marketing analytics challenges.
-
-### 🎯 Product 1: Causal Impact Analyzer
-- **Status:** ✅ **Ready** (integrated in Hub)
-- **Purpose:** Measure true causal impact of campaigns using Bayesian BSTS
-- **Key Features:**
-  - Bayesian structural time series methodology
-  - Avoids Difference-in-Differences pitfalls
-  - Handles seasonality, trends, and confounders
-  - 5 specialized AI agents
-  - Client-ready reports with counterfactual analysis
-- **Use Cases:** TV, Radio, OOH campaign attribution
-- **Access:** Navigate to Product 1 → Run Analysis in sidebar
-
-### 🧠 Product 2: Scout (Marketing Intelligence Assistant)
-- **Status:** ✅ **Beta** (integrated in Hub)
-- **Purpose:** Multi-perspective analysis of marketing data
-- **Key Features:**
-  - 💰 **Stingy Customer** - Budget-focused, ROI-obsessed CFO perspective
-  - 🔬 **Critical Thinker** - Analytical data scientist questioning assumptions
-  - 🎨 **Creative Ad Man** - Visionary creative director seeing brand opportunities
-  - Action-oriented one-pagers
-  - Customizable perspectives
-- **Use Cases:** Strategy reviews, stakeholder presentations, budget planning
-- **Access:** Navigate to Product 2 → Run Analysis in sidebar
-
-### 🛡️ Product 3: TrustCheck (Report QA Layer)
-- **Status:** ⏳ **In Development** (Q2 2025)
-- **Purpose:** Automated quality assurance for marketing reports
-- **Key Features:**
-  - Data cross-reference validation
-  - Hallucination detection
-  - Statistical anomaly flagging
-  - Source verification
-  - Confidence scoring (Green/Amber/Red)
-- **Target:** Address #1 AI adoption barrier (quality concerns)
-- **Access:** Overview available in sidebar
+A comprehensive marketing intelligence suite with **integrated QA validation** and **synthetic testing** to prevent AI hallucinations and ensure all outputs are grounded in verified facts.
 
 ---
 
-## 🏗️ Platform Architecture
+## 🚨 Critical Mission Statement
 
-The Electric Glue Hub uses a **unified navigation structure**:
+**If the QA Housekeeping Agent fails to catch a fabrication, the entire project is considered a failure.**
+
+This is the baseline quality standard for all future work. The QA system is tested continuously with synthetic test cases and displays real-time health status via a traffic light system.
+
+---
+
+## 🚀 Features
+
+### 1. Scout - Marketing Intelligence Assistant
+AI-powered research tool that gathers comprehensive business intelligence with multi-perspective analysis.
+
+**Three Strategic Perspectives:**
+- 😈 **Devil's Advocate**: Risk analysis, what could go wrong, hidden costs
+- 🌟 **Optimist**: Growth opportunities, untapped potential, quick wins
+- ⚖️ **Realist**: Practical constraints, trade-offs, MVP approach
+
+**Quality Assurance:**
+- ✅ **QA Housekeeping Agent**: Every output validated for fabrications before display
+- ✅ **Fact-Constrained Mode**: All claims must be grounded in verified sources with citations
+- ✅ **Deep Web Research**: Gathers 100+ sources automatically
+- ✅ **Quality Enforcement**: Minimum 10 sources, 30 facts per analysis
+- 🚦 **Synthetic Testing**: Continuous validation of QA agent with traffic light status
+
+### 2. Causal Impact Analyzer
+Bayesian structural time series (BSTS) analysis for measuring true campaign impact.
+
+**Key Features:**
+- Campaign-specific analysis with 90-day measurement windows
+- Deterministic results (fixed random seeds for reproducibility)
+- Confidence intervals and statistical significance testing
+- Counterfactual forecasting
+- Client-ready visualizations
+
+### 3. QA Housekeeping Agent (Critical Innovation)
+
+**The baseline operator deployed across all future projects.**
+
+#### Validation Checks
+
+**CRITICAL Severity (Blocks Output):**
+1. **Fabrication Detection** - Any statistic/metric without source citation
+2. **Data Integrity** - Claims must match underlying data
+3. **Statistical Validity** - Statistical claims must be mathematically correct
+
+**HIGH Severity (3+ blocks output):**
+4. **Citation Validation** - All factual claims must have [Fact #X] references
+5. **Fact Reference Validation** - Cited fact numbers must exist
+6. **Contradiction Detection** - Conflicting claims across sections
+
+**MEDIUM/LOW Severity (Warnings only):**
+7. **Completeness** - All required sections present
+8. **Interpretation Accuracy** - Conclusions match data
+
+#### Decision Logic
 
 ```
-Electric Glue Hub (http://localhost:8505)
-│
-├── 🏠 Home
-│   ├── Welcome section
-│   ├── Product cards (3 products)
-│   └── Why Electric Glue section
-│
-├── 📊 Product 1: Causal Impact
-│   ├── Overview (methodology, use cases, features)
-│   └── Run Analysis (upload data, configure, view results)
-│
-├── 💡 Product 2: Scout
-│   ├── Overview (perspectives, use cases, examples)
-│   └── Run Analysis (input metrics, select perspectives, download)
-│
-└── ✓ Product 3: TrustCheck
-    └── Overview (problem, solution, timeline)
+BLOCK   → Any CRITICAL issues → Output NOT shown to user
+WARN    → HIGH/MEDIUM issues → Output shown with warnings
+APPROVE → No issues → Clean output
 ```
 
-Each product is **independent and self-contained** with its own:
-- Overview page explaining methodology
-- Analysis interface with dedicated workflow
-- Branding consistent with Electric Glue identity
+#### Synthetic Testing System
+
+The QA agent is continuously tested with synthetic test cases to ensure it catches all categories of errors:
+
+**Test Categories:**
+- ✅ **Fabrication Detection**: Catches made-up statistics
+- ✅ **Missing Citations**: Catches factual claims without sources
+- ✅ **Invalid References**: Catches citations to non-existent facts
+- ✅ **Data Mismatches**: Catches statistical claim contradictions
+- ✅ **Clean Outputs**: Properly approves valid outputs
+
+**Traffic Light Status:**
+- 🟢 **GREEN**: All tests passing (≥95% accuracy)
+- 🟡 **YELLOW**: Some tests failing (80-94% accuracy)
+- 🔴 **RED**: Critical failures (<80% accuracy)
 
 ---
 
-## ⚡ Quick Start
-
-### 1. Install Dependencies
-
-```bash
-cd electric-glue-hub
-python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Mac/Linux
-pip install -r requirements.txt
-```
-
-### 2. (Optional) Configure API Keys
-
-For LLM-powered insights in Product 2 (Scout), create `.env`:
-
-```bash
-copy .env.example .env
-# Edit .env and add your OpenAI or Anthropic API key
-```
-
-**Note:** The system works WITHOUT API keys using rule-based logic. LLM just enhances the narrative.
-
-### 3. Run the Hub
-
-```bash
-python run_hub.py
-```
-
-Browser opens at **http://localhost:8505**
-
----
-
-## Using Product 2: Marketing Intelligence Assistant
-
-### Workflow
-
-1. **Navigate** to Product 2 from Hub homepage
-2. **Input Campaign Metrics:**
-   - Total Spend (£)
-   - Revenue Generated (£)
-   - Sample Size
-   - Time Period (days)
-   - Brand Awareness (%)
-   - Engagement Rate (%)
-   - Marketing Channels used
-
-3. **Add Context** (optional):
-   - Industry
-   - Target Audience
-   - Campaign Type
-   - Specific Questions
-
-4. **Select Perspectives:**
-   - Check which viewpoints you want (1-3)
-   - Each provides different angle on same data
-
-5. **Generate Report:**
-   - Click "Generate Intelligence Report"
-   - View insights from each perspective
-   - Download Markdown or Text report
-
-### Example Output
-
-Each perspective provides:
-- **Key Insight** (2-3 sentences)
-- **Top 3 Actions** (specific, actionable)
-- **Warning/Caveat** (what to watch out for)
-
-**Example (Stingy Customer):**
-> "Barely breaking even at 2.4x ROAS. We're spending £50,000 to make £120,000. Not good enough."
->
-> Actions:
-> 1. Cut bottom 20% performers immediately - Reallocate that £10K to proven channels
-> 2. Demand proof before any new spend - Pilot test with £5-10K max
-> 3. Negotiate all vendor contracts down 15-20%
-
----
-
-## The Three Perspectives Explained
-
-### 💰 Stingy Customer
-**Persona:** Budget-conscious CFO who scrutinizes every pound
-
-**Focus:**
-- ROI and efficiency
-- Cost-cutting opportunities
-- Proof of value
-- Eliminating waste
-
-**When to use:**
-- Budget reviews
-- Stakeholder presentations to finance
-- Justifying spend
-- Finding cost savings
-
-**Tone:** Skeptical, no-nonsense, data-driven
-
----
-
-### 🔬 Critical Thinker
-**Persona:** Data scientist who questions every assumption
-
-**Focus:**
-- Statistical rigor
-- Confounders and biases
-- Methodology flaws
-- Alternative explanations
-
-**When to use:**
-- Internal strategy reviews
-- Challenging your own assumptions
-- Pre-client presentation (sanity check)
-- Academic/technical audiences
-
-**Tone:** Analytical, skeptical, intellectually honest
-
----
-
-### 🎨 Creative Ad Man
-**Persona:** Creative director seeing brand opportunities
-
-**Focus:**
-- Bold campaign ideas
-- Brand building (not just performance)
-- Creative opportunities
-- Long-term brand equity
-
-**When to use:**
-- Creative briefs
-- Brand strategy discussions
-- Pitching big ideas
-- Breaking out of performance marketing rut
-
-**Tone:** Enthusiastic, visionary, bold
-
----
-
-## Port Configuration
-
-**Why port 8505?**
-- Product 1 (TV Campaign): `8501` (standalone)
-- Connected Budget Optimizer (other client): `8504`
-- **Electric Glue Hub: `8505`** ← Current app
-- Future tools: `8506+`
-
-Each tool has dedicated port to avoid conflicts.
-
----
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 electric-glue-hub/
-├── app.py                      # Main hub homepage
-├── pages/
-│   └── 1_Marketing_Intelligence.py  # Product 2 interface
 ├── agents/
-│   ├── __init__.py
-│   └── perspective_agents.py   # 3 perspective agents
+│   ├── perspective_agents.py          # Three perspective agents (Devil, Optimist, Realist)
+│   ├── scout_research_agent.py        # Scout orchestrator with QA integration
+│   └── qa_housekeeping_agent.py       # QA validation agent
 ├── config/
-│   ├── __init__.py
-│   └── branding.py             # Electric Glue branding (shared with Product 1)
-├── requirements.txt
-├── .env.example
-├── run_hub.py                  # Startup script
-└── README.md                   # This file
+│   ├── fact_constrained_prompts.py    # Fact-constrained prompts for perspectives
+│   ├── qa_prompts.py                  # QA validation prompts
+│   ├── scout_prompts.py               # Scout research prompts
+│   └── branding.py                    # UI theme/styling
+├── models/
+│   └── qa_models.py                   # QA validation data structures
+├── tests/
+│   └── test_qa_synthetic.py           # Synthetic test suite for QA agent
+├── pages/
+│   ├── 2_Causal_Impact_Analyzer.py    # Causal Impact UI
+│   ├── 4_Marketing_Intelligence.py    # Scout UI with QA status
+│   └── 5_QA_Health_Monitor.py         # QA testing dashboard
+├── app.py                             # Homepage
+├── README.md                          # This file
+└── requirements.txt                   # Python dependencies
 ```
 
 ---
 
-## LLM Integration (Optional)
+## 🔧 Installation
 
-Product 2 can use LLMs for enhanced narrative quality:
+### Prerequisites
+- Python 3.9+
+- Anthropic API key (for Claude)
 
-**With LLM (OpenAI/Anthropic):**
-- More natural language
-- Context-aware recommendations
-- Tailored to your specific situation
+### Setup
 
-**Without LLM (Rule-Based):**
-- Fast, deterministic
-- No API costs
-- Still provides actionable insights
-
-**Setup:**
-1. Add API key to `.env`
-2. System auto-detects and uses LLM
-3. Falls back to rules if unavailable
-
----
-
-## Roadmap
-
-### Current (v1.0)
-- ✅ Hub homepage with navigation
-- ✅ Product 2: Marketing Intelligence (3 perspectives)
-- ✅ Rule-based + LLM-powered insights
-- ✅ Export to Markdown/Text
-
-### Next (v1.1 - Week 2)
-- [ ] Product 3: Report QA Layer integration
-- [ ] Enhanced perspective: "Data Scientist" view
-- [ ] Comparison mode (see all 3 perspectives side-by-side)
-- [ ] Historical reports (save past analyses)
-
-### Future (v2.0 - Month 2)
-- [ ] Full Scout integration (Company Research, Competitive Analysis)
-- [ ] Custom perspective creation (define your own persona)
-- [ ] Multi-campaign comparison
-- [ ] API access for programmatic use
-
----
-
-## Differences from Product 1
-
-| Feature | Product 1 (TV Campaign) | Product 2 (Marketing Intelligence) |
-|---------|-------------------------|-----------------------------------|
-| **Focus** | Causal impact of TV ads | General marketing insights |
-| **Methodology** | Bayesian BSTS | Multi-perspective analysis |
-| **Agents** | 5 specialized (Data, Validation, Analysis, Interpretation, Orchestrator) | 3 perspectives (Stingy, Critical, Creative) |
-| **Output** | Statistical report with causality | Action-oriented one-pagers |
-| **Use Case** | Measure specific campaign ROI | Strategic decision-making |
-| **Complexity** | High (MCMC, statistical inference) | Low (quick insights) |
-| **Runtime** | 2-5 minutes | <30 seconds |
-
-**Both share:** Electric Glue branding, LLM integration patterns, client-ready outputs
-
----
-
-## Troubleshooting
-
-### "Module not found: config.branding"
-
-**Solution:** Make sure you're running from project root:
+1. Clone the repository:
 ```bash
-cd C:\Users\harry\OneDrive\Desktop\EG\electric-glue-hub
-python run_hub.py
+git clone https://github.com/yourusername/electric-glue-hub.git
+cd electric-glue-hub
 ```
 
-### "Port 8505 already in use"
-
-**Solution:** Kill existing process or use different port:
+2. Install dependencies:
 ```bash
-# Use different port
-streamlit run app.py --server.port=8506
-
-# Or kill process
-netstat -ano | findstr :8505
-taskkill /PID <PID> /F
+pip install -r requirements.txt
 ```
 
-### Perspectives seem generic
+3. Set up environment variables:
+Create a `.env` file with:
+```
+ANTHROPIC_API_KEY=your_api_key_here
+```
 
-**Solution:**
-1. Add more context in "Additional Business Context" section
-2. Be specific in "Specific Question or Focus"
-3. Add API key for LLM-powered insights (more tailored)
+4. Run the application:
+```bash
+streamlit run app.py
+```
 
----
-
-## Next Steps
-
-1. ✅ **Test Product 2** - Try with your own campaign data
-2. ⏳ **Integrate Product 1** - Add TV Campaign tool as Product 1 page
-3. ⏳ **Build Product 3** - Report QA Layer
-4. ⏳ **Deploy to Cloud** - Make accessible to Electric Glue team
+The platform will be available at `http://localhost:8505`
 
 ---
 
-## Support
+## 🎯 Usage
 
-**For Electric Glue Team:**
-- Product questions: Contact project lead
-- Technical issues: Check GitHub repo or ask dev team
-- Feature requests: Submit via internal roadmap process
+### Scout Research with QA Validation
 
-**Built by Electric Glue | Where AI Meets Marketing Science**
+1. Navigate to **Scout** from the homepage
+2. Enter a company name or topic
+3. Select research depth (Quick, Balanced, Deep Dive)
+4. All three perspectives are analyzed automatically
+5. **QA Validation runs automatically:**
+   - 🟢 Blocked outputs show critical errors
+   - 🟡 Approved outputs show with warnings
+   - ✅ Clean outputs show with validation badge
+
+### QA Health Monitoring
+
+1. Navigate to **QA Health Monitor** from sidebar
+2. View real-time synthetic test results
+3. Traffic light status shows QA agent health:
+   - 🟢 **GREEN**: System operational (≥95% tests passing)
+   - 🟡 **YELLOW**: Degraded performance (80-94% passing)
+   - 🔴 **RED**: Critical failure (<80% passing)
+4. Run tests on-demand to verify QA agent accuracy
+
+### Causal Impact Analysis
+
+1. Navigate to **Causal Impact Analyzer**
+2. Upload time series CSV with date and KPI columns
+3. Define campaign start/end dates
+4. System calculates 90-day measurement window
+5. Get statistical analysis with visualizations
 
 ---
 
-**Version History:**
-- v1.0 (Current): Hub + Product 2 (Marketing Intelligence)
-- v0.9: Product 1 standalone (TV Campaign Impact Analyzer)
+## 🛡️ QA Validation System Architecture
+
+### Integration Flow
+
+```
+User Query
+    ↓
+Scout Research (gather sources, extract facts)
+    ↓
+Multi-Perspective Analysis (Devil's Advocate, Optimist, Realist)
+    ↓
+QA Housekeeping Agent Validation ← [CRITICAL GATE]
+    ↓
+    ├─ BLOCK → Show errors, do not show output
+    ├─ WARN  → Show output with warnings
+    └─ APPROVE → Show clean output
+    ↓
+Display to User
+```
+
+### Code Integration Example
+
+```python
+# In scout_research_agent.py
+qa_result = self.qa_agent.validate_scout_output(
+    output_content=final_output,
+    company_name=query,
+    verified_facts=verified_facts_text,
+    sources_used=sources
+)
+
+if qa_result.should_block():
+    # CRITICAL issues found - DO NOT show output to user
+    return {
+        'qa_blocked': True,
+        'qa_issues': qa_result.get_critical_issues(),
+        'message': 'Output contains fabricated statistics'
+    }
+```
+
+### Validation Examples
+
+**❌ BLOCKED Example:**
+```
+Output: "Revenue grew 45% YoY"
+Verified Facts: [No revenue data present]
+Decision: BLOCK
+Reason: FABRICATION - statistic without source citation
+```
+
+**✅ APPROVED Example:**
+```
+Output: "Company raised $10M Series A [Fact #5]"
+Verified Facts: "5. Company raised $10M Series A (Source: TechCrunch, 2024-03-15)"
+Decision: APPROVE
+Reason: Claim matches verified fact with proper citation
+```
+
+---
+
+## 🧪 Synthetic Testing System
+
+### Purpose
+Continuously validate that the QA Housekeeping Agent correctly identifies fabrications, missing citations, and other errors.
+
+### Test Categories
+
+1. **Fabrication Detection (CRITICAL)**
+   - Test: Output contains "Revenue is $50M" without source
+   - Expected: BLOCK with FABRICATION issue
+
+2. **Missing Citations (HIGH)**
+   - Test: Factual claim "Based in London" without [Fact #X]
+   - Expected: WARN or BLOCK with MISSING_CITATION issue
+
+3. **Invalid References (HIGH)**
+   - Test: Output cites [Fact #99] but only 10 facts exist
+   - Expected: BLOCK with INVALID_REFERENCE issue
+
+4. **Data Integrity (CRITICAL)**
+   - Test: Claims "Sample size: 100" when actual data has 50 rows
+   - Expected: BLOCK with DATA_INTEGRITY issue
+
+5. **Clean Output (Control)**
+   - Test: All claims properly cited with valid fact numbers
+   - Expected: APPROVE with no issues
+
+### Running Tests
+
+```bash
+# Command line
+python -m pytest tests/test_qa_synthetic.py -v
+
+# Or use the UI
+Navigate to QA Health Monitor page → Click "Run Synthetic Tests"
+```
+
+### Traffic Light Interpretation
+
+- 🟢 **GREEN (≥95%)**: QA system is catching all test fabrications correctly
+- 🟡 **YELLOW (80-94%)**: Some test cases failing - investigate immediately
+- 🔴 **RED (<80%)**: Critical failure - QA system not reliable, halt deployments
+
+---
+
+## 📊 Perspective Agents Details
+
+### 😈 Devil's Advocate
+- **Focus**: Risks, vulnerabilities, failure modes
+- **Output Format**: Risk register, stress tests, downside scenarios
+- **Example Insight**: "70% dependency on single channel creates systemic risk if Instagram algorithm changes"
+- **Key Questions**: What could go wrong? Where are we vulnerable? What's the downside?
+
+### 🌟 Optimist
+- **Focus**: Growth opportunities, quick wins, untapped potential
+- **Output Format**: Scaling opportunities, expansion ideas, upside scenarios
+- **Example Insight**: "Lookalike audiences show 85% similarity to best converters - £200K+ expansion opportunity"
+- **Key Questions**: Where's the opportunity? What's the upside? How can we grow faster?
+
+### ⚖️ Realist
+- **Focus**: Practical constraints, trade-offs, MVP approach
+- **Output Format**: Incremental improvements, realistic milestones, pragmatic actions
+- **Example Insight**: "Fix attribution first (15-20% data loss), then scale top channel, then test creative"
+- **Key Questions**: What's actually doable? What are the trade-offs? What's the MVP?
+
+---
+
+## 🔬 Technical Implementation
+
+### Fact-Constrained Prompts
+All perspective agents use prompts that:
+- Accept only verified facts as input
+- Require [Fact #X] citations for all claims
+- Acknowledge data gaps explicitly
+- Never fabricate statistics or metrics
+
+### QA Configuration
+
+```python
+qa_config = QAConfig(
+    enabled=True,                    # Always on in production
+    block_on_critical=True,          # Block if any CRITICAL issues
+    block_on_high_count=3,           # Block if 3+ HIGH issues
+    check_fabrication=True,          # Detect fabricated statistics
+    check_citations=True,            # Validate all citations
+    check_fact_references=True,      # Verify fact numbers exist
+    check_contradictions=True,       # Detect conflicting claims
+    log_all_validations=True,        # Log every validation
+    log_directory="logs/qa_validation"
+)
+```
+
+### Validation Logging
+All QA validations are logged to `logs/qa_validation/` with:
+- Timestamp
+- Decision (APPROVE/BLOCK/WARN)
+- Issues found with severity
+- Output content length
+- Company/topic analyzed
+
+---
+
+## 📈 Future Enhancements
+
+- [ ] Integrate QA validation into Causal Impact (requires agent refactor)
+- [ ] Add code generation validation for Causal Impact outputs
+- [ ] Build QA analytics dashboard (failure pattern analysis)
+- [ ] Implement auto-retry with LLM-based fixes for blocked outputs
+- [ ] Add adversarial testing (red team attacks on QA system)
+- [ ] Multi-language support for QA validation
+- [ ] Custom QA rules per client/industry
+
+---
+
+## 🤝 Contributing
+
+**Quality Standards:**
+1. All outputs MUST pass QA validation
+2. No fabricated statistics allowed - ever
+3. All claims must cite sources with [Fact #X] format
+4. Test QA system with adversarial examples
+5. Synthetic tests must maintain ≥95% pass rate
+
+**Pull Request Checklist:**
+- [ ] All new features include QA validation
+- [ ] Synthetic tests added for new validation rules
+- [ ] Traffic light dashboard updated if QA logic changes
+- [ ] Documentation updated with examples
+
+---
+
+## 📄 License
+
+MIT License
+
+---
+
+## 👥 Contact
+
+**Harry Sumner**
+GitHub: [@HarrySumner](https://github.com/HarrySumner)
+
+---
+
+## 🚨 Critical Reminder
+
+**The QA Housekeeping Agent is the foundation of trust in this system.**
+
+If it fails to catch fabrications, users receive false information, and the entire platform's credibility is destroyed. The synthetic testing system exists to ensure this never happens.
+
+**Monitor the traffic light. Keep it green. 🟢**

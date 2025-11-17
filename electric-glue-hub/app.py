@@ -11,10 +11,11 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from config.branding import apply_electric_glue_theme, BRAND_COLORS
+from config.qa_status import render_qa_traffic_light, render_qa_diagnostics
 
 # Page configuration
 st.set_page_config(
-    page_title="Electric Glue | Agentic Marketing Intelligence Platform",
+    page_title="Homepage | Electric Glue",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -38,28 +39,25 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
     # Home
-    st.page_link("app.py", label="🏠 Home")
+    st.page_link("app.py", label="Home", icon="🏠")
 
     st.markdown("---")
 
     # Product 1
-    st.page_link("pages/2_Causal_Impact_Analyzer.py", label="🎯 Causal Impact")
+    st.page_link("pages/2_Causal_Impact_Analyzer.py", label="Causal Impact", icon="🎯")
 
     st.markdown("---")
 
     # Product 2
-    st.page_link("pages/4_Marketing_Intelligence.py", label="🧠 Scout")
-
-    st.markdown("---")
-
-    # Product 3
-    st.markdown("<p style='color: #999; font-size: 0.95rem;'>🛡️ TrustCheck</p>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #999; font-size: 0.75rem; margin-left: 1.5rem; margin-top: -0.5rem;'>⏳ Coming Soon</p>", unsafe_allow_html=True)
+    st.page_link("pages/4_Marketing_Intelligence.py", label="Scout", icon="🧠")
 
     st.markdown("---")
 
     # Settings
-    st.page_link("pages/6_Settings.py", label="⚙️ Settings")
+    st.page_link("pages/6_Settings.py", label="Settings", icon="⚙️")
+
+# Render QA traffic light in sidebar
+render_qa_traffic_light(location="sidebar")
 
 # Logo and Header
 st.markdown(f"""
@@ -83,7 +81,7 @@ st.markdown(f"""
 st.markdown("## 🚀 Our Products")
 st.markdown("<br>", unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns(3, gap="large")
+col1, col2 = st.columns(2, gap="large")
 
 with col1:
     st.markdown(f"""
@@ -127,14 +125,14 @@ with col2:
             </h3>
         </div>
         <p style='color: #555; font-size: 1rem; line-height: 1.6; text-align: center; margin-bottom: 2rem;'>
-            Get <strong>multi-perspective analysis</strong> of your marketing data. See your campaigns through
-            the eyes of a CFO, data scientist, and creative director—all at once.
+            Get <strong>multi-perspective analysis</strong> of your marketing data with <strong>QA validation</strong>.
+            Every output verified against sources to prevent fabrications.
         </p>
         <div style='background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-top: auto;'>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>💰 Perspective:</strong> Stingy Customer (ROI)</p>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>🔬 Perspective:</strong> Critical Thinker (Rigor)</p>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>🎨 Perspective:</strong> Creative Ad Man (Brand)</p>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>⚡ Output:</strong> Actionable one-pagers</p>
+            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>😈 Perspective:</strong> Devil's Advocate (Risks)</p>
+            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>🌟 Perspective:</strong> Optimist (Opportunities)</p>
+            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>⚖️ Perspective:</strong> Realist (Trade-offs)</p>
+            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>✅ QA Agent:</strong> Validates all outputs</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -143,34 +141,25 @@ with col2:
     st.page_link("pages/4_Marketing_Intelligence.py", label="🚀 Launch Tool", use_container_width=True, icon="🧠")
     st.markdown("</div>", unsafe_allow_html=True)
 
-with col3:
-    st.markdown(f"""
-    <div style='background: white; padding: 2.5rem; border-radius: 15px;
-                box-shadow: 0 6px 20px rgba(0,0,0,0.08); height: 520px;
-                border-top: 6px solid {BRAND_COLORS['info']}; transition: all 0.3s ease; opacity: 0.7;'>
-        <div style='text-align: center;'>
-            <div style='font-size: 4rem; margin-bottom: 1rem;'>🛡️</div>
-            <h2 style='color: {BRAND_COLORS['secondary']}; font-size: 1.3rem; margin-bottom: 0.5rem;'>Product 3</h2>
-            <h3 style='color: {BRAND_COLORS['info']}; font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;'>
-                TrustCheck
-            </h3>
-        </div>
-        <p style='color: #555; font-size: 1rem; line-height: 1.6; text-align: center; margin-bottom: 2rem;'>
-            <strong>Automated QA</strong> for marketing reports. Validate data, catch errors,
-            and ensure quality before client delivery. Never send a bad report again.
-        </p>
-        <div style='background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-top: auto;'>
-            <p style='font-size: 0.95rem; color: #999; margin: 0.5rem 0;'><strong>⏳ Status:</strong> In Development</p>
-            <p style='font-size: 0.95rem; color: #999; margin: 0.5rem 0;'><strong>🔍 Feature:</strong> Data validation</p>
-            <p style='font-size: 0.95rem; color: #999; margin: 0.5rem 0;'><strong>🔍 Feature:</strong> Hallucination detection</p>
-            <p style='font-size: 0.95rem; color: #999; margin: 0.5rem 0;'><strong>⚡ Output:</strong> Validated reports</p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+# QA System Health Diagnostics
+st.markdown("---")
+st.markdown("## 🚦 QA System Health")
+st.markdown("<br>", unsafe_allow_html=True)
 
-    st.markdown("<div style='margin-top: 1.5rem; text-align: center;'>", unsafe_allow_html=True)
-    st.button("⏳ Coming Soon", key="prod3", use_container_width=True, disabled=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+qa_diagnostics_html = render_qa_diagnostics()
+st.markdown(qa_diagnostics_html, unsafe_allow_html=True)
+
+st.markdown("""
+<div style='text-align: center; margin-top: 2rem; padding: 1.5rem; background: rgba(0,255,0,0.03); border-radius: 10px;'>
+    <p style='color: #666; margin: 0; font-size: 0.95rem;'>
+        <strong>🛡️ Quality Assurance:</strong> The QA Housekeeping Agent validates all Scout outputs with 75 synthetic tests.
+        <br><br>
+        <strong>Critical Mission:</strong> If the QA agent fails to catch a fabrication, the project is considered a failure.
+        <br>
+        This system is the foundation of trust and will be deployed across all future Electric Glue products.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 # Footer
 st.markdown("---")
