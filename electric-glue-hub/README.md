@@ -92,11 +92,24 @@ The QA agent is continuously tested with synthetic test cases to ensure it catch
 
 ```
 electric-glue-hub/
+├── app.py                             # Hub homepage
+├── pages/
+│   ├── 2_Causal_Impact_Analyzer.py    # Product 1: Simplified causal impact
+│   ├── 3_Connected_Budget_Optimizer.py # Product 2: Budget optimizer
+│   ├── 4_Marketing_Intelligence.py    # Product 3: Scout with QA
+│   └── 6_Settings.py                  # Settings
+├── tv-campaign-impact-analyzer/       # Full TV campaign analyzer (subfolder)
+│   ├── agents/                        # 5 specialized agents
+│   ├── streamlit_app/                 # Standalone TV app
+│   ├── core/                          # Core analysis engine
+│   ├── run_app.py                     # Standalone launcher
+│   └── README.md                      # TV analyzer docs
 ├── agents/
 │   ├── perspective_agents.py          # Three perspective agents (Devil, Optimist, Realist)
 │   ├── scout_research_agent.py        # Scout orchestrator with QA integration
 │   └── qa_housekeeping_agent.py       # QA validation agent
 ├── config/
+│   ├── branding.py                    # Electric Glue branding
 │   ├── fact_constrained_prompts.py    # Fact-constrained prompts for perspectives
 │   ├── qa_prompts.py                  # QA validation prompts
 │   ├── scout_prompts.py               # Scout research prompts
@@ -105,13 +118,10 @@ electric-glue-hub/
 │   └── qa_models.py                   # QA validation data structures
 ├── tests/
 │   └── test_qa_synthetic.py           # Synthetic test suite for QA agent
-├── pages/
-│   ├── 2_Causal_Impact_Analyzer.py    # Causal Impact UI
-│   ├── 4_Marketing_Intelligence.py    # Scout UI with QA status
-│   └── 5_QA_Health_Monitor.py         # QA testing dashboard
-├── app.py                             # Homepage
+├── utils/                             # Utility functions
 ├── README.md                          # This file
-└── requirements.txt                   # Python dependencies
+├── requirements.txt                   # Python dependencies
+└── run_hub.py                         # Quick launcher script
 ```
 
 ---
@@ -143,10 +153,12 @@ ANTHROPIC_API_KEY=your_api_key_here
 
 4. Run the application:
 ```bash
-streamlit run app.py
+streamlit run app.py --server.port=8505
 ```
 
 The platform will be available at `http://localhost:8505`
+
+**Note:** Electric Glue Hub runs on port 8505 to avoid conflicts with other client projects.
 
 ---
 
@@ -173,13 +185,33 @@ The platform will be available at `http://localhost:8505`
    - 🔴 **RED**: Critical failure (<80% passing)
 4. Run tests on-demand to verify QA agent accuracy
 
-### Causal Impact Analysis
+### Causal Impact Analysis (Simplified)
 
-1. Navigate to **Causal Impact Analyzer**
+1. Navigate to **Causal Impact Analyzer** from the homepage
 2. Upload time series CSV with date and KPI columns
 3. Define campaign start/end dates
 4. System calculates 90-day measurement window
 5. Get statistical analysis with visualizations
+
+### TV Campaign Impact Analyzer (Full Multi-Agent System)
+
+The full TV Campaign Impact Analyzer is available as a subfolder with 5 specialized agents:
+
+1. **Standalone Mode:**
+   ```bash
+   cd tv-campaign-impact-analyzer
+   python run_app.py
+   ```
+   Access at: `http://localhost:8501`
+
+2. **Features:**
+   - 5 specialized agents (Data Validation, Analysis, Interpretation, QA, Reporting)
+   - Client-ready reports with executive summaries
+   - Advanced BSTS modeling for TV, Radio, OOH campaigns
+   - Deterministic results with fixed random seeds
+
+3. **Documentation:**
+   See [tv-campaign-impact-analyzer/README.md](tv-campaign-impact-analyzer/README.md) for full details
 
 ---
 

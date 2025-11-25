@@ -145,6 +145,11 @@ class ScoutResearchAgent:
         if personas is None:
             personas = ['devil', 'optimist', 'realist']
 
+        # START TIMER
+        import time
+        start_time = time.time()
+        phase_times = {}
+
         results = {
             'query': query,
             'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -154,11 +159,13 @@ class ScoutResearchAgent:
             'facts': [],
             'insights': {},
             'quality_score': 0,
-            'quality_report': {}
+            'quality_report': {},
+            'timing': {}
         }
 
         try:
             # Phase 1: Planning
+            phase_start = time.time()
             if progress_callback:
                 progress_callback("🎯 Planning Research", "Creating research plan with quality targets", 10)
 

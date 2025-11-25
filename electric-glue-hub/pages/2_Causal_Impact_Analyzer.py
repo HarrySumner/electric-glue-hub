@@ -1,6 +1,6 @@
 """
-Product 1: Causal Impact Analyser
-Run Bayesian causal analysis on your campaign data
+Product 1: AV Campaign Analyser
+Advanced Bayesian MCMC analysis for TV/radio campaign impact measurement
 """
 
 import streamlit as st
@@ -18,11 +18,13 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from config.branding import apply_electric_glue_theme, BRAND_COLORS, format_header
 from config.qa_status import render_qa_traffic_light
+from core.bayesian_causal_impact import run_causal_impact_analysis
+from core.qa_validator import CampaignAnalysisQA
 
 # Page config
 st.set_page_config(
-    page_title="Causal Impact Analyser | Electric Glue",
-    page_icon="🎯",
+    page_title="AV Campaign Analyser | Electric Glue",
+    page_icon="📺",
     layout="wide"
 )
 
@@ -31,8 +33,8 @@ apply_electric_glue_theme()
 
 # Header
 st.markdown(format_header(
-    "🎯 Causal Impact Analyser",
-    "Measure True Campaign Impact with Bayesian Analysis"
+    "📺 AV Campaign Analyser",
+    "Advanced Bayesian MCMC Analysis for TV/Radio Campaign Impact"
 ), unsafe_allow_html=True)
 
 # Navigation
@@ -102,13 +104,13 @@ with st.sidebar:
 # Render QA traffic light in sidebar
 render_qa_traffic_light(location="sidebar")
 
-    st.markdown("---")
+st.markdown("---")
 
-    st.markdown("#### Advanced")
-    mcmc_samples = st.number_input("MCMC Samples", 500, 5000, 1000, step=500)
+st.markdown("#### Advanced")
+mcmc_samples = st.number_input("MCMC Samples", 500, 5000, 1000, step=500)
 
 # Main content
-tab1, tab2, tab3 = st.tabs(["📤 Upload Data", "⚙️ Configure Analysis", "📊 Results"])
+tab1, tab2, tab3, tab4 = st.tabs(["📤 Upload Data", "⚙️ Configure Analysis", "📊 Results", "🚦 QA Validation"])
 
 with tab1:
     st.markdown("### Upload Your Campaign Data")
@@ -248,7 +250,7 @@ with tab1:
     if 'data' in st.session_state:
         st.markdown("---")
         st.markdown("#### Data Preview (Normalised)")
-        st.dataframe(st.session_state['data'].head(10), use_container_width=True)
+        st.dataframe(st.session_state['data'].head(10), width='stretch')
 
         # Basic stats
         col1, col2, col3, col4 = st.columns(4)
@@ -297,9 +299,18 @@ with tab2:
             if default_end > max_date:
                 default_end = max_date
 
+            # Get session state value and validate it's within range
+            session_end = st.session_state.get('campaign_end_date', default_end)
+            if isinstance(session_end, pd.Timestamp):
+                session_end = session_end.date()
+
+            # Ensure the session value is within the valid range
+            if session_end < campaign_start or session_end > max_date:
+                session_end = default_end
+
             campaign_end = st.date_input(
                 "Campaign End Date",
-                value=st.session_state.get('campaign_end_date', default_end).date() if isinstance(st.session_state.get('campaign_end_date'), pd.Timestamp) else st.session_state.get('campaign_end_date', default_end),
+                value=session_end,
                 min_value=campaign_start,
                 max_value=max_date,
                 help="The date when your campaign ended"
@@ -420,7 +431,7 @@ with tab2:
             ]
         })
 
-        st.dataframe(config_df, use_container_width=True, hide_index=True)
+        st.dataframe(config_df, width='stretch', hide_index=True)
 
 with tab3:
     st.markdown("### 📊 Campaign Impact Analysis Results")
@@ -434,7 +445,7 @@ with tab3:
     else:
         st.markdown("---")
 
-        if st.button("🚀 Run Campaign Impact Analysis", type="primary", use_container_width=True):
+        if st.button("🚀 Run Bayesian MCMC Analysis", type="primary", width='stretch'):
 
             # Get data and campaign dates
             data = st.session_state['data'].copy()
@@ -470,82 +481,84 @@ with tab3:
                 time.sleep(0.8)
                 progress_bar.progress(100)
 
-                # CRITICAL: Set seed for reproducibility
-                # This ensures identical results for same data/parameters
-                np.random.seed(42)
+                # Run PROPER Bayesian MCMC analysis
+                status_text.text("🔬 Running Bayesian MCMC analysis with proper statistical inference...")
 
-                # Split data for campaign analysis
-                # Pre-campaign: used for building counterfactual model
+                # Use the new Bayesian causal impact module
+                bayesian_results = run_causal_impact_analysis(
+                    data=data,
+                    campaign_start=campaign_start,
+                    campaign_end=campaign_end,
+                    measurement_end=measurement_end,
+                    kpi_column='y',
+                    confidence_level=confidence_level / 100,  # Convert to decimal
+                    n_samples=mcmc_samples,  # Use the UI setting
+                    seed=42  # For reproducibility
+                )
+
+                # Get pre-campaign and measurement data for display
                 pre_data = data[data['date'] < campaign_start].copy()
-
-                # Measurement window: 90 days AFTER campaign end
-                # This is the key change - we only measure post-campaign uplift
                 measurement_data = data[(data['date'] > campaign_end) & (data['date'] <= measurement_end)].copy()
 
-                # Simplified BSTS-style prediction (demonstration)
-                # In production, use actual causalimpact package
-                from sklearn.linear_model import LinearRegression
+                # Compute cumulative effect for visualization
+                cumulative_effect = np.cumsum(bayesian_results['point_effect_mean'])
 
-                # Fit trend + seasonality model on pre-campaign period
-                pre_data['t'] = np.arange(len(pre_data))
-                pre_data['day_of_week'] = pre_data['date'].dt.dayofweek
-                pre_data['sin_week'] = np.sin(2 * np.pi * pre_data['t'] / 7)
-                pre_data['cos_week'] = np.sin(2 * np.pi * pre_data['t'] / 7)
-
-                # Fit model
-                X_pre = pre_data[['t', 'sin_week', 'cos_week']].values
-                y_pre = pre_data['y'].values
-
-                model = LinearRegression()
-                model.fit(X_pre, y_pre)
-
-                # Predict counterfactual for 90-day measurement window
-                measurement_data['t'] = np.arange(len(pre_data) + (campaign_end - campaign_start).days + 1,
-                                                  len(pre_data) + (campaign_end - campaign_start).days + 1 + len(measurement_data))
-                measurement_data['day_of_week'] = measurement_data['date'].dt.dayofweek
-                measurement_data['sin_week'] = np.sin(2 * np.pi * measurement_data['t'] / 7)
-                measurement_data['cos_week'] = np.cos(2 * np.pi * measurement_data['t'] / 7)
-
-                X_measurement = measurement_data[['t', 'sin_week', 'cos_week']].values
-                counterfactual = model.predict(X_measurement)
-
-                # Calculate effects (only for 90-day measurement window)
-                actual = measurement_data['y'].values
-                point_effect = actual - counterfactual
-                cumulative_effect = np.cumsum(point_effect)
-
-                # Simplified confidence intervals (demonstration)
-                # In production, use MCMC posterior samples
-                residual_std = np.std(y_pre - model.predict(X_pre))
-                ci_width = 1.96 * residual_std
-
-                # Store results with cache key to ensure reproducibility
-                # Cache key includes campaign dates and confidence level
-                cache_key = f"{campaign_start}_{campaign_end}_{confidence_level}"
-
+                # Store results in session state
                 st.session_state['results'] = {
-                    'pre_data': pre_data,
-                    'post_data': measurement_data,  # 90-day measurement window
-                    'actual': actual,
-                    'counterfactual': counterfactual,
-                    'point_effect': point_effect,
+                    # Core Bayesian results
+                    'actual': bayesian_results['actual'],
+                    'counterfactual': bayesian_results['counterfactual_mean'],
+                    'counterfactual_lower': bayesian_results['counterfactual_lower'],
+                    'counterfactual_upper': bayesian_results['counterfactual_upper'],
+                    'point_effect': bayesian_results['point_effect_mean'],
+                    'point_effect_lower': bayesian_results['point_effect_lower'],
+                    'point_effect_upper': bayesian_results['point_effect_upper'],
                     'cumulative_effect': cumulative_effect,
-                    'ci_width': ci_width,
-                    'total_effect': np.sum(point_effect),
-                    'avg_effect': np.mean(point_effect),
-                    'relative_effect': (np.mean(point_effect) / np.mean(counterfactual)) * 100,
-                    'intervention_date': campaign_start,  # Campaign start
-                    'campaign_end_date': campaign_end,  # Campaign end
-                    'measurement_end_date': measurement_end,  # End of 90-day window
-                    'cache_key': cache_key,
+                    'cumulative_lower': bayesian_results['cumulative_lower'],
+                    'cumulative_upper': bayesian_results['cumulative_upper'],
+
+                    # Summary statistics
+                    'total_effect': bayesian_results['cumulative_effect'],
+                    'avg_effect': bayesian_results['daily_average'],
+                    'relative_effect': bayesian_results['relative_effect'],
+                    'prob_causal_effect': bayesian_results['prob_causal_effect'],
+
+                    # MCMC diagnostics
+                    'convergence': bayesian_results['convergence'],
+                    'n_samples': bayesian_results['n_samples'],
+                    'posterior_samples': bayesian_results.get('posterior_samples'),
+
+                    # Metadata and visualization data
+                    'pre_data': pre_data,
+                    'post_data': measurement_data,
+                    'intervention_date': campaign_start,
+                    'campaign_end_date': campaign_end,
+                    'measurement_end_date': measurement_end,
                     'confidence_level': confidence_level,
                     'include_seasonality': include_seasonality,
                     'include_trend': include_trend,
                     'campaign_days': (campaign_end - campaign_start).days + 1,
-                    'measurement_days': len(measurement_data)
+                    'measurement_days': len(measurement_data),
+                    'n_pre_points': bayesian_results['n_pre_points'],
+                    'n_post_points': bayesian_results['n_post_points']
                 }
 
-                status_text.text("✅ Analysis complete!")
+                status_text.text("🔍 Running QA validation...")
+                progress_bar.progress(95)
+
+                # Run QA validation
+                qa_validator = CampaignAnalysisQA()
+                qa_report = qa_validator.validate_all(
+                    data=data,
+                    results=st.session_state['results'],
+                    campaign_start=campaign_start,
+                    campaign_end=campaign_end
+                )
+
+                # Store QA report in session state
+                st.session_state['qa_report'] = qa_report
+
+                status_text.text("✅ Analysis and QA validation complete!")
                 time.sleep(0.5)
                 progress_bar.empty()
                 status_text.empty()
@@ -598,42 +611,126 @@ with tab3:
                 )
 
             with col4:
-                prob_effect = 95  # Simplified - would come from MCMC in production
+                # Use actual posterior probability from MCMC
+                prob_effect = results.get('prob_causal_effect', 95)
                 st.metric(
-                    "Confidence",
-                    f"{prob_effect}%",
-                    help="Probability that campaign drove real incremental value"
+                    "Probability of Effect",
+                    f"{prob_effect:.1f}%",
+                    help="Bayesian posterior probability that campaign drove positive incremental value (from MCMC samples)"
                 )
 
-            # Detailed summary table
+            # MCMC Diagnostics
             st.markdown("---")
-            st.markdown("### 📊 Detailed Impact Summary")
+            st.markdown("### 🔬 MCMC Diagnostics & Credible Intervals")
 
-            summary_df = pd.DataFrame({
-                'Metric': [
-                    'Actual (observed)',
-                    'Predicted (counterfactual)',
-                    'Absolute Effect',
-                    'Relative Effect',
-                    'Cumulative Effect'
-                ],
-                'Average': [
-                    f"{np.mean(results['actual']):,.0f}",
-                    f"{np.mean(results['counterfactual']):,.0f}",
-                    f"{results['avg_effect']:,.0f}",
-                    f"{results['relative_effect']:.1f}%",
-                    f"{results['cumulative_effect'][-1]:,.0f}"
-                ],
-                'Cumulative': [
-                    f"{np.sum(results['actual']):,.0f}",
-                    f"{np.sum(results['counterfactual']):,.0f}",
-                    f"{results['total_effect']:,.0f}",
-                    f"{(results['total_effect'] / np.sum(results['counterfactual']) * 100):.1f}%",
-                    f"{results['cumulative_effect'][-1]:,.0f}"
-                ]
-            })
+            convergence = results.get('convergence', {})
+            col1, col2, col3 = st.columns(3)
 
-            st.dataframe(summary_df, use_container_width=True, hide_index=True)
+            with col1:
+                st.metric(
+                    "MCMC Samples",
+                    f"{results.get('n_samples', 0):,}",
+                    help="Number of MCMC iterations used for posterior distribution"
+                )
+
+            with col2:
+                ess = convergence.get('effective_sample_size', 0)
+                st.metric(
+                    "Effective Sample Size",
+                    f"{ess:.0f}",
+                    help="Effective number of independent samples after accounting for autocorrelation"
+                )
+
+            with col3:
+                converged = convergence.get('converged', False)
+                status_icon = "✅" if converged else "⚠️"
+                status_text = "Converged" if converged else "Check needed"
+                st.metric(
+                    "Convergence Status",
+                    f"{status_icon} {status_text}",
+                    help=convergence.get('message', 'MCMC convergence status')
+                )
+
+            # Detailed summary table with credible intervals
+            st.markdown("---")
+            st.markdown("### 📊 Detailed Impact Summary with Credible Intervals")
+
+            ci_level = results.get('confidence_level', 95)
+
+            # Handle both old and new result formats
+            if 'cumulative_lower' in results and 'cumulative_upper' in results:
+                # New Bayesian format
+                summary_df = pd.DataFrame({
+                    'Metric': [
+                        'Actual (observed)',
+                        'Predicted (counterfactual)',
+                        'Absolute Effect',
+                        'Relative Effect',
+                        'Cumulative Effect'
+                    ],
+                    'Point Estimate': [
+                        f"{np.mean(results['actual']):,.0f}",
+                        f"{np.mean(results['counterfactual']):,.0f}",
+                        f"{results['avg_effect']:,.0f}",
+                        f"{results['relative_effect']:.1f}%",
+                        f"{results['total_effect']:,.0f}"
+                    ],
+                    f'{ci_level}% Credible Interval': [
+                        "—",
+                        f"[{np.mean(results['counterfactual_lower']):,.0f}, {np.mean(results['counterfactual_upper']):,.0f}]",
+                        f"[{np.mean(results['point_effect_lower']):,.0f}, {np.mean(results['point_effect_upper']):,.0f}]",
+                        "—",
+                        f"[{results['cumulative_lower']:,.0f}, {results['cumulative_upper']:,.0f}]"
+                    ],
+                    'Cumulative Total': [
+                        f"{np.sum(results['actual']):,.0f}",
+                        f"{np.sum(results['counterfactual']):,.0f}",
+                        f"{results['total_effect']:,.0f}",
+                        f"{results['relative_effect']:.1f}%",
+                        f"{results['total_effect']:,.0f}"
+                    ]
+                })
+            else:
+                # Old format fallback
+                summary_df = pd.DataFrame({
+                    'Metric': [
+                        'Actual (observed)',
+                        'Predicted (counterfactual)',
+                        'Absolute Effect',
+                        'Relative Effect',
+                        'Cumulative Effect'
+                    ],
+                    'Average': [
+                        f"{np.mean(results['actual']):,.0f}",
+                        f"{np.mean(results['counterfactual']):,.0f}",
+                        f"{results['avg_effect']:,.0f}",
+                        f"{results['relative_effect']:.1f}%",
+                        f"{results.get('total_effect', 0):,.0f}"
+                    ],
+                    'Cumulative': [
+                        f"{np.sum(results['actual']):,.0f}",
+                        f"{np.sum(results['counterfactual']):,.0f}",
+                        f"{results['total_effect']:,.0f}",
+                        f"{(results['total_effect'] / np.sum(results['counterfactual']) * 100):.1f}%",
+                        f"{results.get('total_effect', 0):,.0f}"
+                    ]
+                })
+
+            st.dataframe(summary_df, width='stretch', hide_index=True)
+
+            # Add explanation of credible intervals
+            with st.expander("ℹ️ Understanding Credible Intervals"):
+                st.markdown(f"""
+                **Bayesian Credible Intervals** represent the range where we believe the true effect lies
+                with {ci_level}% probability, based on {results.get('n_samples', 0):,} MCMC samples.
+
+                - **Point Estimate**: The mean of the posterior distribution (most likely value)
+                - **{ci_level}% Credible Interval**: The range containing {ci_level}% of the posterior probability mass
+                - **Interpretation**: "We are {ci_level}% confident the true effect is within this range"
+
+                This is more robust than traditional confidence intervals because it incorporates
+                uncertainty from multiple sources through Bayesian posterior sampling.
+                """)
 
             # Visualizations
             st.markdown("---")
@@ -648,9 +745,10 @@ with tab3:
             ax1 = axes[0]
             ax1.set_facecolor('#0E1117')
 
-            # Pre-period actual
-            ax1.plot(results['pre_data']['date'], results['pre_data']['y'],
-                    color='#00FF00', linewidth=2.5, label='Pre-Intervention Actual', zorder=3)
+            # Pre-period actual (if available)
+            if 'pre_data' in results and results['pre_data'] is not None and len(results['pre_data']) > 0:
+                ax1.plot(results['pre_data']['date'], results['pre_data']['y'],
+                        color='#00FF00', linewidth=2.5, label='Pre-Intervention Actual', zorder=3)
 
             # Post-period actual
             ax1.plot(results['post_data']['date'], results['actual'],
@@ -660,11 +758,18 @@ with tab3:
             ax1.plot(results['post_data']['date'], results['counterfactual'],
                     color='#39FF14', linestyle='--', linewidth=2.5, label='Counterfactual Prediction', zorder=2)
 
-            # Confidence interval
-            ax1.fill_between(results['post_data']['date'].values,
-                            results['counterfactual'] - results['ci_width'],
-                            results['counterfactual'] + results['ci_width'],
-                            color='#39FF14', alpha=0.15, label='95% Confidence Interval', zorder=1)
+            # Credible interval (from Bayesian MCMC)
+            if 'counterfactual_lower' in results and 'counterfactual_upper' in results:
+                ax1.fill_between(results['post_data']['date'].values,
+                                results['counterfactual_lower'],
+                                results['counterfactual_upper'],
+                                color='#39FF14', alpha=0.15, label=f'{ci_level}% Credible Interval (MCMC)', zorder=1)
+            else:
+                # Fallback for old format
+                ax1.fill_between(results['post_data']['date'].values,
+                                results['counterfactual'] - results.get('ci_width', 0),
+                                results['counterfactual'] + results.get('ci_width', 0),
+                                color='#39FF14', alpha=0.15, label='95% Confidence Interval', zorder=1)
 
             # Intervention line
             ax1.axvline(results['intervention_date'], color='#FF6B6B', linestyle='--',
@@ -689,17 +794,27 @@ with tab3:
             # Determine color based on effect direction
             effect_color = '#00FF00' if np.mean(results['point_effect']) > 0 else '#FF6B6B'
 
+            # Plot credible interval if available
+            if 'point_effect_lower' in results and 'point_effect_upper' in results:
+                ax2.fill_between(results['post_data']['date'].values,
+                                results['point_effect_lower'],
+                                results['point_effect_upper'],
+                                color=effect_color, alpha=0.15, zorder=1, label=f'{ci_level}% Credible Interval')
+
             ax2.fill_between(results['post_data']['date'].values, 0, results['point_effect'],
-                            color=effect_color, alpha=0.25, zorder=1)
+                            color=effect_color, alpha=0.25, zorder=2)
             ax2.plot(results['post_data']['date'], results['point_effect'],
-                    color=effect_color, linewidth=2.5, zorder=2)
+                    color=effect_color, linewidth=2.5, zorder=3, label='Point Effect')
             ax2.axhline(0, color='#666', linestyle='-', linewidth=1.5, alpha=0.6, zorder=0)
             ax2.axvline(results['intervention_date'], color='#FF6B6B', linestyle='--',
                        linewidth=2.5, alpha=0.8, zorder=3)
 
-            ax2.set_title('Pointwise Causal Effect', color='white', fontsize=16, fontweight='bold', pad=15)
+            ax2.set_title('Pointwise Causal Effect with Credible Intervals', color='white', fontsize=16, fontweight='bold', pad=15)
             ax2.set_xlabel('Date', color='white', fontsize=12)
             ax2.set_ylabel('Effect Size', color='white', fontsize=12)
+            if 'point_effect_lower' in results:
+                ax2.legend(facecolor='#0E1117', edgecolor='#00FF00', labelcolor='white',
+                          fontsize=10, loc='upper left', framealpha=0.9)
             ax2.tick_params(colors='white', labelsize=10)
             ax2.spines['bottom'].set_color('#262730')
             ax2.spines['left'].set_color('#262730')
@@ -735,8 +850,115 @@ with tab3:
             plt.tight_layout(pad=2.0)
 
             # Display the plot with proper configuration
-            st.pyplot(fig, use_container_width=True)
+            st.pyplot(fig, width='stretch')
             plt.close(fig)
+
+            # Posterior Distribution Visualization (if MCMC samples available)
+            if 'posterior_samples' in results and results['posterior_samples'] is not None:
+                st.markdown("---")
+                st.markdown("### 📊 Posterior Distribution of Cumulative Effect")
+
+                with st.expander("ℹ️ What is a Posterior Distribution?", expanded=False):
+                    st.markdown(f"""
+                    The **posterior distribution** shows all possible values of the cumulative effect
+                    based on {results.get('n_samples', 0):,} MCMC samples.
+
+                    - The **peak** shows the most likely value
+                    - The **spread** shows the uncertainty
+                    - The **shaded area** contains {ci_level}% of the probability mass (credible interval)
+
+                    This is the foundation of Bayesian inference—instead of a single point estimate,
+                    we get a full probability distribution showing all plausible values.
+                    """)
+
+                # Create histogram of posterior samples
+                fig_posterior, ax = plt.subplots(figsize=(12, 6), facecolor='#0E1117')
+                ax.set_facecolor('#0E1117')
+
+                posterior_cumulative = results['posterior_samples']['cumulative_effect']
+
+                # Histogram
+                n, bins, patches = ax.hist(posterior_cumulative, bins=50, density=True,
+                                          color='#00FF00', alpha=0.6, edgecolor='#00FF00',
+                                          linewidth=1.5)
+
+                # Add credible interval shading
+                lower_bound = results['cumulative_lower']
+                upper_bound = results['cumulative_upper']
+
+                # Shade the credible interval
+                for i, patch in enumerate(patches):
+                    if bins[i] >= lower_bound and bins[i] <= upper_bound:
+                        patch.set_facecolor('#39FF14')
+                        patch.set_alpha(0.8)
+
+                # Add vertical lines for key statistics
+                mean_val = results['total_effect']
+                ax.axvline(mean_val, color='#00FF00', linestyle='-',
+                          linewidth=3, label=f'Mean: {mean_val:,.0f}', zorder=10)
+                ax.axvline(lower_bound, color='#39FF14', linestyle='--',
+                          linewidth=2, label=f'{ci_level}% Credible Interval', zorder=9)
+                ax.axvline(upper_bound, color='#39FF14', linestyle='--',
+                          linewidth=2, zorder=9)
+                ax.axvline(0, color='#FF6B6B', linestyle='-',
+                          linewidth=2, label='No Effect', alpha=0.7, zorder=8)
+
+                ax.set_title(f'Posterior Distribution of Cumulative Effect ({results.get("n_samples", 0):,} MCMC Samples)',
+                            color='white', fontsize=16, fontweight='bold', pad=15)
+                ax.set_xlabel('Cumulative Effect', color='white', fontsize=12)
+                ax.set_ylabel('Probability Density', color='white', fontsize=12)
+                ax.legend(facecolor='#0E1117', edgecolor='#00FF00', labelcolor='white',
+                         fontsize=11, loc='upper left', framealpha=0.9)
+                ax.tick_params(colors='white', labelsize=10)
+                ax.spines['bottom'].set_color('#262730')
+                ax.spines['left'].set_color('#262730')
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+                ax.grid(True, alpha=0.15, color='#262730', linestyle='-', linewidth=0.5)
+
+                plt.tight_layout()
+                st.pyplot(fig_posterior, width='stretch')
+                plt.close(fig_posterior)
+
+                # Add probability statistics
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    prob_positive = results['prob_causal_effect']
+                    st.metric(
+                        "P(Effect > 0)",
+                        f"{prob_positive:.1f}%",
+                        help="Probability that the campaign had a positive effect"
+                    )
+
+                with col2:
+                    # Calculate probability of "meaningful" effect (e.g., >5% of counterfactual)
+                    counterfactual_total = np.sum(results['counterfactual'])
+                    if 'posterior_samples' in results and results['posterior_samples'] is not None:
+                        meaningful_threshold = counterfactual_total * 0.05
+                        prob_meaningful = np.mean(posterior_cumulative > meaningful_threshold) * 100
+                    else:
+                        prob_meaningful = prob_positive if results['relative_effect'] > 5 else 0
+
+                    st.metric(
+                        "P(Effect > 5%)",
+                        f"{prob_meaningful:.1f}%",
+                        help="Probability that the campaign drove >5% uplift"
+                    )
+
+                with col3:
+                    # Probability of very large effect (>20%)
+                    if 'posterior_samples' in results and results['posterior_samples'] is not None:
+                        large_threshold = counterfactual_total * 0.20
+                        prob_large = np.mean(posterior_cumulative > large_threshold) * 100
+                    else:
+                        prob_large = prob_positive if results['relative_effect'] > 20 else 0
+
+                    st.metric(
+                        "P(Effect > 20%)",
+                        f"{prob_large:.1f}%",
+                        help="Probability that the campaign drove >20% uplift"
+                    )
 
             # Interpretation
             st.markdown("---")
@@ -778,7 +1000,13 @@ with tab3:
             st.markdown("### 💡 Plain-English Interpretation")
 
             direction = "positive" if results['avg_effect'] > 0 else "negative"
-            significance = "statistically significant" if prob_effect > 90 else "not statistically significant"
+            # Use 80% as threshold - standard for Bayesian "likely" effect
+            if prob_effect >= 95:
+                significance = "highly statistically significant"
+            elif prob_effect >= 80:
+                significance = "statistically significant"
+            else:
+                significance = "not statistically significant"
 
             st.markdown(f"""
             <div style='background: linear-gradient(135deg, rgba(0,255,0,0.05) 0%, rgba(0,0,0,0.05) 100%);
@@ -815,47 +1043,230 @@ with tab3:
                 st.download_button(
                     "📊 Download Results (CSV)",
                     csv,
-                    "causal_impact_results.csv",
+                    "av_campaign_analysis_results.csv",
                     "text/csv",
-                    use_container_width=True
+                    width='stretch'
                 )
 
             with col2:
                 # Summary report
+                # Get convergence info
+                convergence = results.get('convergence', {})
+                n_samples = results.get('n_samples', 0)
+
                 report = f"""
-CAUSAL IMPACT ANALYSIS REPORT
-Electric Glue - Causal Impact Analyser
+AV CAMPAIGN ANALYSIS REPORT
+Electric Glue - AV Campaign Analyser
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-INTERVENTION DATE: {results['intervention_date'].strftime('%Y-%m-%d')}
+ANALYSIS METHOD: Bayesian MCMC with Structural Time Series
+MCMC SAMPLES: {n_samples:,}
+CONVERGENCE STATUS: {convergence.get('message', 'N/A')}
+
+CAMPAIGN PERIOD:
+- Campaign Start: {results['intervention_date'].strftime('%Y-%m-%d')}
+- Campaign End: {results['campaign_end_date'].strftime('%Y-%m-%d')}
+- Campaign Duration: {results['campaign_days']} days
+- Measurement Window: {results['measurement_days']} days post-campaign
 
 SUMMARY STATISTICS:
-- Total Causal Impact: {results['total_effect']:,.0f} units
-- Average Daily Effect: {results['avg_effect']:,.0f} units
+- Total Incremental Impact: {results['total_effect']:,.0f} units
+- Average Daily Effect: {results['avg_effect']:,.0f} units/day
 - Relative Lift: {results['relative_effect']:.1f}%
-- Probability of Effect: {prob_effect}%
+- Posterior Probability of Positive Effect: {results.get('prob_causal_effect', prob_effect):.1f}%
 
-POST-INTERVENTION PERIOD:
-- Actual (observed): {np.mean(results['actual']):,.0f} average, {np.sum(results['actual']):,.0f} total
-- Predicted (counterfactual): {np.mean(results['counterfactual']):,.0f} average, {np.sum(results['counterfactual']):,.0f} total
-- Absolute Effect: {results['avg_effect']:,.0f} average, {results['total_effect']:,.0f} total
+CREDIBLE INTERVALS ({results.get('confidence_level', 95)}%):
+- Cumulative Effect: [{results.get('cumulative_lower', 0):,.0f}, {results.get('cumulative_upper', 0):,.0f}]
 
-INTERPRETATION:
-The intervention had a {significance} {direction} effect on the KPI, with an estimated
-{results['total_effect']:,.0f} incremental units over the post-intervention period
-({results['relative_effect']:.1f}% lift vs. counterfactual).
+MEASUREMENT WINDOW (90 DAYS POST-CAMPAIGN):
+- Actual (observed): {np.mean(results['actual']):,.0f} avg/day, {np.sum(results['actual']):,.0f} total
+- Counterfactual (predicted): {np.mean(results['counterfactual']):,.0f} avg/day, {np.sum(results['counterfactual']):,.0f} total
+- Incremental Effect: {results['avg_effect']:,.0f} avg/day, {results['total_effect']:,.0f} total
+
+STATISTICAL INTERPRETATION:
+The AV campaign had a {significance} {direction} effect on the KPI. Based on {n_samples:,} MCMC samples,
+we estimate {results['total_effect']:,.0f} incremental units over the 90-day post-campaign
+measurement window, representing a {results['relative_effect']:.1f}% uplift vs. the counterfactual.
+
+The Bayesian posterior probability of a positive effect is {results.get('prob_causal_effect', prob_effect):.1f}%,
+indicating {'strong' if results.get('prob_causal_effect', prob_effect) > 95 else 'moderate' if results.get('prob_causal_effect', prob_effect) > 80 else 'weak'} evidence of campaign impact.
 
 ---
-Powered by Multi-Agent AI × Front Left Thinking
+Powered by Electric Glue | Advanced Bayesian Analysis
                 """
 
                 st.download_button(
                     "📄 Download Report (TXT)",
                     report,
-                    "causal_impact_report.txt",
+                    "av_campaign_analysis_report.txt",
                     "text/plain",
-                    use_container_width=True
+                    width='stretch'
                 )
+
+with tab4:
+    st.markdown("### 🚦 QA Validation Report")
+
+    if 'qa_report' not in st.session_state:
+        st.info("ℹ️ Run the analysis first to see QA validation results.")
+    else:
+        qa = st.session_state['qa_report']
+
+        # Overall Status Banner
+        status = qa['overall_status']
+        confidence = qa['confidence_score']
+
+        if status == 'PASSED':
+            status_color = '#00FF00'
+            status_icon = '✅'
+            status_bg = 'rgba(0,255,0,0.1)'
+        elif status == 'WARNING':
+            status_color = '#FFA500'
+            status_icon = '⚠️'
+            status_bg = 'rgba(255,165,0,0.1)'
+        else:
+            status_color = '#FF0000'
+            status_icon = '🔴'
+            status_bg = 'rgba(255,0,0,0.1)'
+
+        st.markdown(f"""
+        <div style='background: {status_bg}; padding: 2rem; border-radius: 15px;
+                    border-left: 6px solid {status_color}; margin-bottom: 2rem;'>
+            <h2 style='color: {status_color}; margin-top: 0; font-size: 2rem;'>
+                {status_icon} QA Status: {status}
+            </h2>
+            <p style='font-size: 1.5rem; font-weight: 600; color: {status_color}; margin: 1rem 0;'>
+                Confidence Score: {confidence:.1f}%
+            </p>
+            <p style='color: #666; font-size: 1rem; margin: 0;'>
+                {qa['recommendation']}
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Confidence Score Breakdown
+        st.markdown("#### 📊 Confidence Score Breakdown")
+
+        breakdown = qa['confidence_breakdown']
+        cols = st.columns(3)
+
+        breakdown_items = [
+            ('Data Quality', breakdown.get('data_quality', 0), 'Quality and completeness of input data'),
+            ('Statistical Validity', breakdown.get('statistical_validity', 0), 'Statistical rigor and sample size'),
+            ('MCMC Convergence', breakdown.get('mcmc_convergence', 0), 'Bayesian MCMC convergence quality'),
+            ('Calculation Verification', breakdown.get('calculation_verification', 0), 'Mathematical accuracy checks'),
+            ('Output Coherence', breakdown.get('output_coherence', 0), 'Internal consistency of results'),
+            ('Counterfactual Validity', breakdown.get('counterfactual_validity', 0), 'Quality of baseline forecast')
+        ]
+
+        for i, (name, score, description) in enumerate(breakdown_items):
+            col_idx = i % 3
+            with cols[col_idx]:
+                # Determine color based on score
+                if score >= 85:
+                    bar_color = '#00FF00'
+                elif score >= 70:
+                    bar_color = '#FFA500'
+                else:
+                    bar_color = '#FF0000'
+
+                st.markdown(f"""
+                <div style='background: white; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.05);'>
+                    <p style='margin: 0 0 0.5rem 0; font-weight: 600; color: #333;'>{name}</p>
+                    <div style='background: #f0f0f0; height: 20px; border-radius: 10px; overflow: hidden;'>
+                        <div style='background: {bar_color}; height: 100%; width: {score}%;
+                                    transition: width 0.3s ease;'></div>
+                    </div>
+                    <p style='margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #666;'>
+                        {score:.0f}% - {description}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # Detailed Layer Results
+        st.markdown("---")
+        st.markdown("#### 🔍 Detailed Validation Results")
+
+        layers = qa['layer_results']
+
+        for layer_name, layer_data in layers.items():
+            layer_title = layer_name.replace('_', ' ').title()
+            layer_score = layer_data['score']
+            layer_passed = layer_data['passed']
+
+            # Expander for each layer
+            with st.expander(f"{'✅' if layer_passed else '⚠️'} {layer_title} - Score: {layer_score:.0f}%", expanded=not layer_passed):
+                checks = layer_data.get('checks', {})
+
+                if checks:
+                    # Create a dataframe for checks
+                    check_data = []
+                    for check_name, check_result in checks.items():
+                        if isinstance(check_result, dict):
+                            passed = check_result.get('passed', check_result.get('valid', check_result.get('adequate', check_result.get('reasonable', True))))
+                            description = check_result.get('description', str(check_result))
+
+                            check_data.append({
+                                'Check': check_name.replace('_', ' ').title(),
+                                'Status': '✅ Pass' if passed else '❌ Fail',
+                                'Details': description
+                            })
+
+                    if check_data:
+                        df = pd.DataFrame(check_data)
+                        st.dataframe(df, width='stretch', hide_index=True)
+                else:
+                    st.write("No detailed checks available for this layer.")
+
+        # Flags and Warnings
+        if qa['flags'] or qa['warnings']:
+            st.markdown("---")
+            st.markdown("#### ⚠️ Issues Detected")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if qa['flags']:
+                    st.markdown("**Critical Flags:**")
+                    for flag in qa['flags']:
+                        st.markdown(f"- {flag}")
+                else:
+                    st.success("✅ No critical flags")
+
+            with col2:
+                if qa['warnings']:
+                    st.markdown("**Warnings:**")
+                    for warning in qa['warnings']:
+                        st.markdown(f"- {warning}")
+                else:
+                    st.success("✅ No warnings")
+
+        # What This Means Section
+        st.markdown("---")
+        with st.expander("ℹ️ Understanding QA Validation", expanded=False):
+            st.markdown("""
+            ### How QA Validation Works
+
+            The QA system performs **7 layers of automated validation** on your analysis:
+
+            1. **Data Quality (25% weight)**: Checks for missing values, sufficient data points, date continuity, and outliers
+            2. **Statistical Validity (25% weight)**: Validates sample sizes, effect size reasonableness, and credible interval precision
+            3. **MCMC Convergence (20% weight)**: Ensures Bayesian MCMC properly converged with sufficient effective samples
+            4. **Calculation Verification (15% weight)**: Cross-checks all mathematical calculations for accuracy
+            5. **Output Coherence (10% weight)**: Validates internal consistency of results
+            6. **Counterfactual Validity (5% weight)**: Assesses quality of baseline forecast
+
+            ### Traffic Light System
+
+            - 🟢 **PASSED (≥85%)**: High confidence - results are reliable for decision-making
+            - 🟡 **WARNING (70-84%)**: Moderate confidence - review issues before using
+            - 🔴 **FAILED (<70%)**: Low confidence - address critical problems first
+
+            ### Why This Matters
+
+            This QA system addresses the **#1 concern about AI adoption**: accuracy and trustworthiness.
+            By having AI validate AI, we provide transparent confidence scoring for every analysis.
+            """)
 
 # Footer
 st.markdown("---")
@@ -870,6 +1281,11 @@ st.markdown(f"""
     </p>
     <p style='font-size: 0.8rem; color: #bbb; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e0e0e0;'>
         Powered by Multi-Agent AI × <strong style='color: {BRAND_COLORS['primary']};'>Front Left</strong> Thinking
+    </p>
+    <p style='font-size: 0.85rem; margin-top: 1.5rem;'>
+        <a href='https://forms.gle/mXR2nYbJWZ6WzwPX8' target='_blank' style='color: {BRAND_COLORS['primary']}; text-decoration: none; font-weight: 600;'>
+            💬 Share Your Feedback
+        </a>
     </p>
 </div>
 """, unsafe_allow_html=True)

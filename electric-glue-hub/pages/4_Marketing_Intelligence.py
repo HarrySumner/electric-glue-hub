@@ -123,7 +123,7 @@ with col1:
     )
 
 with col2:
-    search_button = st.button("🚀 Research", type="primary", use_container_width=True)
+    search_button = st.button("🚀 Research", type="primary", width='stretch')
 
 # File Upload Section
 with st.expander("📎 Upload Supporting Files (Optional)", expanded=False):
@@ -211,6 +211,24 @@ if search_button or st.session_state.research_complete:
     elif not any([persona_stingy, persona_critical, persona_creative]):
         st.error("⚠️ Please select at least one perspective for analysis")
     else:
+        # CRITICAL: Clear previous results when starting new search
+        if search_button:
+            # User clicked the button - this is a NEW query
+            # Check if query changed from previous
+            previous_query = st.session_state.research_data.get('query', '') if st.session_state.research_data else ''
+            if search_query != previous_query:
+                # NEW QUERY - clear all cached data
+                st.session_state.research_complete = False
+                st.session_state.research_data = None
+                st.session_state.scout_results = None
+                st.info(f"🔄 Starting fresh research for: {search_query}")
+            else:
+                # Same query - just re-running
+                st.session_state.research_complete = False
+        else:
+            # Just displaying previous results - don't clear
+            pass
+
         # Start research process
         st.session_state.research_complete = False
 
@@ -390,16 +408,50 @@ if st.session_state.research_complete and st.session_state.research_data:
 
     st.markdown("---")
 
+    # DEBUG: Show raw sources and facts
+    with st.expander("🔍 DEBUG: Raw Research Data", expanded=False):
+        st.markdown("### Sources Retrieved")
+        if 'scout_results' in st.session_state:
+            sources = st.session_state.scout_results.get('sources', [])
+            st.write(f"**Total sources:** {len(sources)}")
+            for i, source in enumerate(sources[:10], 1):
+                st.markdown(f"{i}. **{source.get('title', 'No title')}**")
+                st.markdown(f"   - URL: {source.get('url', 'No URL')}")
+                st.markdown(f"   - Description: {source.get('description', 'No description')[:200]}")
+                st.markdown(f"   - Type: {source.get('source_type', 'unknown')}")
+
+        st.markdown("### Facts Extracted")
+        if 'scout_results' in st.session_state:
+            facts = st.session_state.scout_results.get('facts', [])
+            st.write(f"**Total facts:** {len(facts)}")
+            for i, fact in enumerate(facts[:15], 1):
+                st.markdown(f"{i}. [{fact.get('category', 'unknown')}] {fact.get('claim', 'No claim')[:150]}")
+                st.markdown(f"   - Source: {fact.get('source_url', 'No source')[:80]}")
+                st.markdown(f"   - Confidence: {fact.get('confidence', 'unknown')}")
+
     # Sentiment & Key Findings Visualization
     st.markdown(f"## 📊 Research Summary & Sentiment Analysis")
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.markdown(f"""
-        <div style='background: white; padding: 2rem; border-radius: 12px; border-top: 4px solid {BRAND_COLORS['primary']};
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
-            <h4 style='color: {BRAND_COLORS['primary']}; margin-top: 0;'>🔑 Key Findings</h4>
+        # Generate key findings from actual facts if available
+        key_findings_html = ""
+        if 'scout_results' in st.session_state:
+            facts = st.session_state.scout_results.get('facts', [])
+            if facts and len(facts) >= 5:
+                # Extract first 5 facts as key findings
+                key_findings_html = "<ul style='color: #555; line-height: 2; font-size: 1rem;'>"
+                for i, fact in enumerate(facts[:5], 1):
+                    category = fact.get('category', 'General').title()
+                    claim = fact.get('claim', 'No data available')
+                    key_findings_html += f"<li><strong>{category}:</strong> {claim}</li>"
+                key_findings_html += "</ul>"
+            else:
+                key_findings_html = f"<p style='color: #888;'>Gathering research data for {data['query']}...</p>"
+        else:
+            # Fallback mock data (only if no real data)
+            key_findings_html = """
             <ul style='color: #555; line-height: 2; font-size: 1rem;'>
                 <li><strong>Market Position:</strong> Strong brand recognition in target demographic (18-34)</li>
                 <li><strong>Competitive Advantage:</strong> Unique positioning in sustainability and ethics</li>
@@ -407,6 +459,13 @@ if st.session_state.research_complete and st.session_state.research_data:
                 <li><strong>Risk Factor:</strong> Heavy reliance on single marketing channel (Instagram 65% of traffic)</li>
                 <li><strong>Budget Efficiency:</strong> CAC trending upward (↑23% YoY), optimization needed</li>
             </ul>
+            """
+
+        st.markdown(f"""
+        <div style='background: white; padding: 2rem; border-radius: 12px; border-top: 4px solid {BRAND_COLORS['primary']};
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.08);'>
+            <h4 style='color: {BRAND_COLORS['primary']}; margin-top: 0;'>🔑 Key Findings</h4>
+            {key_findings_html}
         </div>
         """, unsafe_allow_html=True)
 
@@ -451,27 +510,88 @@ if st.session_state.research_complete and st.session_state.research_data:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Topic Word Cloud (simulated with text)
-    st.markdown(f"""
-    <div style='background: linear-gradient(135deg, rgba(0,255,0,0.05) 0%, rgba(0,0,0,0.05) 100%);
-                padding: 2rem; border-radius: 12px;'>
-        <h4 style='color: {BRAND_COLORS['secondary']}; margin-top: 0;'>☁️ Key Topics & Themes</h4>
-        <div style='text-align: center; padding: 1.5rem;'>
-            <span style='font-size: 2rem; color: {BRAND_COLORS['primary']}; margin: 0.5rem;'>sustainability</span>
-            <span style='font-size: 1.6rem; color: {BRAND_COLORS['accent']}; margin: 0.5rem;'>brand positioning</span>
-            <span style='font-size: 1.4rem; color: {BRAND_COLORS['info']}; margin: 0.5rem;'>social media</span>
-            <span style='font-size: 1.8rem; color: {BRAND_COLORS['success']}; margin: 0.5rem;'>Gen-Z</span>
-            <span style='font-size: 1.3rem; color: #666; margin: 0.5rem;'>influencer marketing</span>
-            <span style='font-size: 1.5rem; color: {BRAND_COLORS['warning']}; margin: 0.5rem;'>ROI optimization</span>
-            <span style='font-size: 1.2rem; color: {BRAND_COLORS['accent']}; margin: 0.5rem;'>customer acquisition</span>
-            <span style='font-size: 1.7rem; color: {BRAND_COLORS['primary']}; margin: 0.5rem;'>authenticity</span>
-            <span style='font-size: 1.4rem; color: #666; margin: 0.5rem;'>content strategy</span>
+    # Topic Word Cloud - Generated from actual research data
+    wordcloud_html = ""
+    if 'scout_results' in st.session_state and st.session_state.scout_results:
+        facts = st.session_state.scout_results.get('facts', [])
+
+        # Extract keywords from facts and count frequency
+        from collections import Counter
+        import re
+
+        # Common words to exclude
+        stopwords = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'can', 'this', 'that', 'these', 'those', 'it', 'its', 'they', 'their', 'them'}
+
+        word_freq = Counter()
+
+        # Extract words from fact claims
+        for fact in facts:
+            claim = fact.get('claim', '').lower()
+            # Remove punctuation and split into words
+            words = re.findall(r'\b[a-z]{3,}\b', claim)
+            # Filter out stopwords and count
+            filtered_words = [w for w in words if w not in stopwords]
+            word_freq.update(filtered_words)
+
+        # Get top 12 words
+        top_words = word_freq.most_common(12)
+
+        if top_words:
+            # Generate word cloud HTML with varying sizes
+            colors = [BRAND_COLORS['primary'], BRAND_COLORS['accent'], BRAND_COLORS['info'],
+                     BRAND_COLORS['success'], BRAND_COLORS['warning'], '#666']
+
+            wordcloud_items = ""
+            max_count = top_words[0][1] if top_words else 1
+
+            for i, (word, count) in enumerate(top_words):
+                # Size based on frequency (1.2rem to 2.2rem)
+                size = 1.2 + (count / max_count) * 1.0
+                color = colors[i % len(colors)]
+                wordcloud_items += f"<span style='font-size: {size}rem; color: {color}; margin: 0.5rem;'>{word}</span>\n"
+
+            wordcloud_html = f"""
+            <div style='background: linear-gradient(135deg, rgba(0,255,0,0.05) 0%, rgba(0,0,0,0.05) 100%);
+                        padding: 2rem; border-radius: 12px;'>
+                <h4 style='color: {BRAND_COLORS['secondary']}; margin-top: 0;'>☁️ Key Topics & Themes</h4>
+                <div style='text-align: center; padding: 1.5rem; line-height: 2.5;'>
+                    {wordcloud_items}
+                </div>
+                <p style='color: #666; font-size: 0.9rem; text-align: center; margin-top: 1rem;'>
+                    Generated from {len(facts)} extracted facts • Size indicates frequency of mention
+                </p>
+            </div>
+            """
+        else:
+            # Fallback if no words extracted
+            wordcloud_html = f"""
+            <div style='background: linear-gradient(135deg, rgba(0,255,0,0.05) 0%, rgba(0,0,0,0.05) 100%);
+                        padding: 2rem; border-radius: 12px;'>
+                <h4 style='color: {BRAND_COLORS['secondary']}; margin-top: 0;'>☁️ Key Topics & Themes</h4>
+                <p style='color: #666; text-align: center; padding: 2rem;'>
+                    Gathering keyword data from research...
+                </p>
+            </div>
+            """
+    else:
+        # Fallback for demo/mock data
+        wordcloud_html = f"""
+        <div style='background: linear-gradient(135deg, rgba(0,255,0,0.05) 0%, rgba(0,0,0,0.05) 100%);
+                    padding: 2rem; border-radius: 12px;'>
+            <h4 style='color: {BRAND_COLORS['secondary']}; margin-top: 0;'>☁️ Key Topics & Themes</h4>
+            <div style='text-align: center; padding: 1.5rem;'>
+                <span style='font-size: 2rem; color: {BRAND_COLORS['primary']}; margin: 0.5rem;'>{data['query'].split()[0] if data['query'] else 'marketing'}</span>
+                <span style='font-size: 1.6rem; color: {BRAND_COLORS['accent']}; margin: 0.5rem;'>strategy</span>
+                <span style='font-size: 1.4rem; color: {BRAND_COLORS['info']}; margin: 0.5rem;'>analysis</span>
+                <span style='font-size: 1.8rem; color: {BRAND_COLORS['success']}; margin: 0.5rem;'>insights</span>
+            </div>
+            <p style='color: #666; font-size: 0.9rem; text-align: center; margin-top: 1rem;'>
+                Research in progress...
+            </p>
         </div>
-        <p style='color: #666; font-size: 0.9rem; text-align: center; margin-top: 1rem;'>
-            Size indicates frequency of mention across research sources
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+        """
+
+    st.markdown(wordcloud_html, unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -488,25 +608,25 @@ if st.session_state.research_complete and st.session_state.research_data:
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        if st.button("🔄 All Perspectives", use_container_width=True,
+        if st.button("🔄 All Perspectives", width='stretch',
                     type="primary" if st.session_state.selected_persona == 'all' else "secondary"):
             st.session_state.selected_persona = 'all'
 
     with col2:
         if 'devil' in data['personas']:
-            if st.button("😈 Devil's Advocate", use_container_width=True,
+            if st.button("😈 Devil's Advocate", width='stretch',
                         type="primary" if st.session_state.selected_persona == 'devil' else "secondary"):
                 st.session_state.selected_persona = 'devil'
 
     with col3:
         if 'optimist' in data['personas']:
-            if st.button("🌟 Optimist", use_container_width=True,
+            if st.button("🌟 Optimist", width='stretch',
                         type="primary" if st.session_state.selected_persona == 'optimist' else "secondary"):
                 st.session_state.selected_persona = 'optimist'
 
     with col4:
         if 'realist' in data['personas']:
-            if st.button("⚖️ Realist", use_container_width=True,
+            if st.button("⚖️ Realist", width='stretch',
                         type="primary" if st.session_state.selected_persona == 'realist' else "secondary"):
                 st.session_state.selected_persona = 'realist'
 
@@ -524,7 +644,7 @@ if st.session_state.research_complete and st.session_state.research_data:
                 persona_analyses[persona_key] = {
                     'icon': '😈' if persona_key == 'devil' else ('🌟' if persona_key == 'optimist' else '⚖️'),
                     'name': insight_data.get('perspective', persona_key.title()),
-                    'color': BRAND_COLORS['error'] if persona_key == 'devil' else (BRAND_COLORS['success'] if persona_key == 'optimist' else BRAND_COLORS['info']),
+                    'color': BRAND_COLORS['danger'] if persona_key == 'devil' else (BRAND_COLORS['success'] if persona_key == 'optimist' else BRAND_COLORS['info']),
                     'tagline': 'Risk Analysis & What Could Go Wrong' if persona_key == 'devil' else ('Growth Opportunities & Quick Wins' if persona_key == 'optimist' else 'Practical Constraints & Trade-Offs'),
                     'insight': insight_data.get('key_insight', ''),
                     'actions': insight_data.get('actions', []),
@@ -537,7 +657,7 @@ if st.session_state.research_complete and st.session_state.research_data:
         'devil': {
             'icon': '😈',
             'name': "Devil's Advocate",
-            'color': BRAND_COLORS['error'],
+            'color': BRAND_COLORS['danger'],
             'tagline': 'Risk Analysis & What Could Go Wrong',
             'insight': f"The {data['query']} strategy has several red flags. Heavy dependency on single-channel performance creates systemic risk. If Instagram algorithm changes or costs spike, entire funnel collapses. No diversification buffer.",
             'actions': [
@@ -718,7 +838,7 @@ Research Depth: {data['depth']}
             data=export_content,
             file_name=f"scout_research_{re.sub(r'[^a-z0-9]+', '_', data['query'].lower())}.md",
             mime="text/markdown",
-            use_container_width=True
+            width='stretch'
         )
 
     with col2:
@@ -727,11 +847,11 @@ Research Depth: {data['depth']}
             data=export_content,
             file_name=f"scout_research_{re.sub(r'[^a-z0-9]+', '_', data['query'].lower())}.txt",
             mime="text/plain",
-            use_container_width=True
+            width='stretch'
         )
 
     with col3:
-        st.button("📊 Export to PDF", use_container_width=True, disabled=True,
+        st.button("📊 Export to PDF", width='stretch', disabled=True,
                  help="Coming soon - PDF export with visualisations")
 
 else:
@@ -773,6 +893,11 @@ st.markdown(f"""
     </p>
     <p style='font-size: 0.8rem; color: #bbb; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e0e0e0;'>
         Powered by Multi-Agent AI × <strong style='color: {BRAND_COLORS['primary']};'>Front Left</strong> Thinking
+    </p>
+    <p style='font-size: 0.85rem; margin-top: 1.5rem;'>
+        <a href='https://forms.gle/mXR2nYbJWZ6WzwPX8' target='_blank' style='color: {BRAND_COLORS['primary']}; text-decoration: none; font-weight: 600;'>
+            💬 Share Your Feedback
+        </a>
     </p>
 </div>
 """, unsafe_allow_html=True)

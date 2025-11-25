@@ -44,12 +44,17 @@ with st.sidebar:
     st.markdown("---")
 
     # Product 1
-    st.page_link("pages/2_Causal_Impact_Analyzer.py", label="Causal Impact", icon="🎯")
+    st.page_link("pages/2_Causal_Impact_Analyzer.py", label="AV Campaign Analyser", icon="📺")
 
     st.markdown("---")
 
     # Product 2
     st.page_link("pages/4_Marketing_Intelligence.py", label="Scout", icon="🧠")
+
+    st.markdown("---")
+
+    # Product 3
+    st.page_link("pages/5_Report_QA_Agent.py", label="Report QA Agent", icon="🚦")
 
     st.markdown("---")
 
@@ -81,64 +86,87 @@ st.markdown(f"""
 st.markdown("## 🚀 Our Products")
 st.markdown("<br>", unsafe_allow_html=True)
 
-col1, col2 = st.columns(2, gap="large")
+col1, col2, col3 = st.columns(3, gap="large")
 
 with col1:
     st.markdown(f"""
-    <div style='background: white; padding: 2.5rem; border-radius: 15px;
-                box-shadow: 0 6px 20px rgba(0,0,0,0.08); height: 520px;
-                border-top: 6px solid {BRAND_COLORS['primary']}; transition: all 0.3s ease;'>
+    <div style='background: white; padding: 2rem; border-radius: 15px;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.08); min-height: 400px;
+                border-top: 6px solid {BRAND_COLORS['primary']}; transition: all 0.3s ease;
+                display: flex; flex-direction: column;'>
         <div style='text-align: center;'>
-            <div style='font-size: 4rem; margin-bottom: 1rem;'>🎯</div>
-            <h2 style='color: {BRAND_COLORS['secondary']}; font-size: 1.3rem; margin-bottom: 0.5rem;'>Product 1</h2>
-            <h3 style='color: {BRAND_COLORS['primary']}; font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;'>
-                Causal Impact Analyser
+            <div style='font-size: 3.5rem; margin-bottom: 0.5rem;'>📺</div>
+            <h3 style='color: {BRAND_COLORS['primary']}; font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;'>
+                AV Campaign Analyser
             </h3>
         </div>
-        <p style='color: #555; font-size: 1rem; line-height: 1.6; text-align: center; margin-bottom: 2rem;'>
-            Measure the <strong>true causal impact</strong> of your campaigns using Bayesian structural time series.
-            Go beyond correlation to understand what actually drives results.
+        <p style='color: #333; font-size: 1rem; line-height: 1.6; text-align: center; margin-bottom: 1.5rem; flex-grow: 1;'>
+            Advanced Bayesian MCMC analysis for measuring TV/radio campaign impact with proper statistical validation.
         </p>
-        <div style='background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-top: auto;'>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>🔬 Methodology:</strong> Bayesian BSTS</p>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>🤖 Agents:</strong> 5 specialized AI agents</p>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>📊 Use Case:</strong> TV, Radio, OOH campaigns</p>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>⚡ Output:</strong> Client-ready reports</p>
+        <div style='background: #f8f9fa; padding: 1.2rem; border-radius: 10px; margin-top: 1rem;'>
+            <p style='font-size: 0.9rem; color: #333; margin: 0.5rem 0;'><strong style='color: {BRAND_COLORS['primary']};'>🔬 Method:</strong> Bayesian MCMC</p>
+            <p style='font-size: 0.9rem; color: #333; margin: 0.5rem 0;'><strong style='color: {BRAND_COLORS['primary']};'>⚡ Type:</strong> Statistical validation</p>
+            <p style='font-size: 0.9rem; color: #333; margin: 0.5rem 0;'><strong style='color: {BRAND_COLORS['primary']};'>📊 Use:</strong> Campaign analysis</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top: 1.5rem; text-align: center;'>", unsafe_allow_html=True)
-    st.page_link("pages/2_Causal_Impact_Analyzer.py", label="🚀 Launch Tool", use_container_width=True, icon="🎯")
+    st.page_link("pages/2_Causal_Impact_Analyzer.py", label="Launch AV Campaign Analyser", use_container_width=True, icon="📺")
     st.markdown("</div>", unsafe_allow_html=True)
 
 with col2:
     st.markdown(f"""
-    <div style='background: white; padding: 2.5rem; border-radius: 15px;
-                box-shadow: 0 6px 20px rgba(0,0,0,0.08); height: 520px;
-                border-top: 6px solid {BRAND_COLORS['accent']}; transition: all 0.3s ease;'>
+    <div style='background: white; padding: 2rem; border-radius: 15px;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.08); min-height: 400px;
+                border-top: 6px solid {BRAND_COLORS['accent']}; transition: all 0.3s ease;
+                display: flex; flex-direction: column;'>
         <div style='text-align: center;'>
-            <div style='font-size: 4rem; margin-bottom: 1rem;'>🧠</div>
-            <h2 style='color: {BRAND_COLORS['secondary']}; font-size: 1.3rem; margin-bottom: 0.5rem;'>Product 2</h2>
-            <h3 style='color: {BRAND_COLORS['accent']}; font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem;'>
+            <div style='font-size: 3.5rem; margin-bottom: 0.5rem;'>🧠</div>
+            <h3 style='color: {BRAND_COLORS['accent']}; font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;'>
                 Scout
             </h3>
         </div>
-        <p style='color: #555; font-size: 1rem; line-height: 1.6; text-align: center; margin-bottom: 2rem;'>
-            Get <strong>multi-perspective analysis</strong> of your marketing data with <strong>QA validation</strong>.
-            Every output verified against sources to prevent fabrications.
+        <p style='color: #333; font-size: 1rem; line-height: 1.6; text-align: center; margin-bottom: 1.5rem; flex-grow: 1;'>
+            Multi-perspective analysis with QA validation. Every output verified to prevent fabrications.
         </p>
-        <div style='background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-top: auto;'>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>😈 Perspective:</strong> Devil's Advocate (Risks)</p>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>🌟 Perspective:</strong> Optimist (Opportunities)</p>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>⚖️ Perspective:</strong> Realist (Trade-offs)</p>
-            <p style='font-size: 0.95rem; color: #666; margin: 0.5rem 0;'><strong>✅ QA Agent:</strong> Validates all outputs</p>
+        <div style='background: #f8f9fa; padding: 1.2rem; border-radius: 10px; margin-top: 1rem;'>
+            <p style='font-size: 0.9rem; color: #333; margin: 0.5rem 0;'><strong style='color: {BRAND_COLORS['accent']};'>😈 Devil's Advocate:</strong> Risk analysis</p>
+            <p style='font-size: 0.9rem; color: #333; margin: 0.5rem 0;'><strong style='color: {BRAND_COLORS['accent']};'>🌟 Optimist:</strong> Growth opportunities</p>
+            <p style='font-size: 0.9rem; color: #333; margin: 0.5rem 0;'><strong style='color: {BRAND_COLORS['accent']};'>⚖️ Realist:</strong> Practical next steps</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top: 1.5rem; text-align: center;'>", unsafe_allow_html=True)
-    st.page_link("pages/4_Marketing_Intelligence.py", label="🚀 Launch Tool", use_container_width=True, icon="🧠")
+    st.page_link("pages/4_Marketing_Intelligence.py", label="Launch Scout", use_container_width=True, icon="🧠")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with col3:
+    st.markdown(f"""
+    <div style='background: white; padding: 2rem; border-radius: 15px;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.08); min-height: 400px;
+                border-top: 6px solid #FF6B6B; transition: all 0.3s ease;
+                display: flex; flex-direction: column;'>
+        <div style='text-align: center;'>
+            <div style='font-size: 3.5rem; margin-bottom: 0.5rem;'>🚦</div>
+            <h3 style='color: #FF6B6B; font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem;'>
+                Report QA Agent
+            </h3>
+        </div>
+        <p style='color: #333; font-size: 1rem; line-height: 1.6; text-align: center; margin-bottom: 1.5rem; flex-grow: 1;'>
+            AI validates AI. Automated quality assurance that flags errors, validates analyses, and provides confidence scores for every output.
+        </p>
+        <div style='background: #f8f9fa; padding: 1.2rem; border-radius: 10px; margin-top: 1rem;'>
+            <p style='font-size: 0.9rem; color: #333; margin: 0.5rem 0;'><strong style='color: #FF6B6B;'>✅ Data Quality:</strong> Checks for errors</p>
+            <p style='font-size: 0.9rem; color: #333; margin: 0.5rem 0;'><strong style='color: #FF6B6B;'>📊 Statistical:</strong> Validates claims</p>
+            <p style='font-size: 0.9rem; color: #333; margin: 0.5rem 0;'><strong style='color: #FF6B6B;'>🎯 Confidence:</strong> Scoring system</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<div style='margin-top: 1.5rem; text-align: center;'>", unsafe_allow_html=True)
+    st.page_link("pages/5_Report_QA_Agent.py", label="View QA Status", use_container_width=True, icon="🚦")
     st.markdown("</div>", unsafe_allow_html=True)
 
 # QA System Health Diagnostics
@@ -163,45 +191,6 @@ st.markdown("""
 
 # Footer
 st.markdown("---")
-st.markdown("## 💡 Why Electric Glue?")
-st.markdown("<br>", unsafe_allow_html=True)
-
-col1, col2 = st.columns(2, gap="large")
-
-with col1:
-    st.markdown(f"""
-    <div style='padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); height: 100%;'>
-        <h3 style='color: {BRAND_COLORS['primary']}; margin-top: 0;'>🎯 Built for Marketing Professionals</h3>
-        <p style='font-size: 1rem; line-height: 1.7; color: #555;'>
-            We're not data scientists trying to understand marketing—we're marketers who understand data science.
-            Every tool is designed to answer questions you actually ask, not ones we think you should.
-        </p>
-        <ul style='font-size: 0.95rem; color: #666; line-height: 1.8;'>
-            <li>No PhD required—plain English outputs</li>
-            <li>Client-ready reports, not academic papers</li>
-            <li>Built on proven methodologies, not hype</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    st.markdown(f"""
-    <div style='padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); height: 100%;'>
-        <h3 style='color: {BRAND_COLORS['accent']}; margin-top: 0;'>🤖 Multi-Agent AI Architecture</h3>
-        <p style='font-size: 1rem; line-height: 1.7; color: #555;'>
-            Each product uses specialized AI agents that collaborate like a team of experts.
-            One agent handles data validation, another runs analysis, a third interprets results—all orchestrated seamlessly.
-        </p>
-        <ul style='font-size: 0.95rem; color: #666; line-height: 1.8;'>
-            <li>Specialized agents for specialized tasks</li>
-            <li>LLM-agnostic (works with or without APIs)</li>
-            <li>Transparent, explainable outputs</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Final Footer
-st.markdown("---")
 st.markdown(f"""
 <div style='text-align: center; padding: 2rem; margin-top: 3rem;'>
     <p style='font-size: 0.85rem; color: #999; margin: 0.5rem 0;'>
@@ -209,6 +198,11 @@ st.markdown(f"""
     </p>
     <p style='font-size: 0.8rem; color: #bbb; margin-top: 1rem;'>
         Powered by Multi-Agent AI × <strong style='color: {BRAND_COLORS['primary']};'>Front Left</strong> Thinking
+    </p>
+    <p style='font-size: 0.85rem; margin-top: 1.5rem;'>
+        <a href='https://forms.gle/mXR2nYbJWZ6WzwPX8' target='_blank' style='color: {BRAND_COLORS['primary']}; text-decoration: none; font-weight: 600;'>
+            💬 Share Your Feedback
+        </a>
     </p>
 </div>
 """, unsafe_allow_html=True)

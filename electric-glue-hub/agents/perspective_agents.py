@@ -14,6 +14,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Import usage tracker
+try:
+    sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
+    from api_usage_tracker import get_tracker
+    TRACKER_AVAILABLE = True
+except ImportError:
+    TRACKER_AVAILABLE = False
+
 # Import fact-constrained prompts
 config_path = Path(__file__).parent.parent / "config"
 sys.path.insert(0, str(config_path))
@@ -92,9 +100,41 @@ class PerspectiveAgent:
                 max_tokens=1000
             )
 
+            # Track usage
+            if TRACKER_AVAILABLE:
+                try:
+                    tracker = get_tracker()
+                    usage = response.get('usage', {})
+                    tracker.track_call(
+                        provider='openai',
+                        model='gpt-4',
+                        operation='perspective_generation',
+                        input_tokens=usage.get('prompt_tokens', 0),
+                        output_tokens=usage.get('completion_tokens', 0),
+                        success=True
+                    )
+                except Exception as e:
+                    print(f"Usage tracking failed: {e}")
+
             return self._parse_response(response['choices'][0]['message']['content'])
 
         except Exception as e:
+            # Track failed call
+            if TRACKER_AVAILABLE:
+                try:
+                    tracker = get_tracker()
+                    tracker.track_call(
+                        provider='openai',
+                        model='gpt-4',
+                        operation='perspective_generation',
+                        input_tokens=0,
+                        output_tokens=0,
+                        success=False,
+                        error=str(e)
+                    )
+                except:
+                    pass
+
             print(f"LLM generation failed: {e}, falling back to rule-based")
             return self._rule_based_generate(data_summary, context)
 
