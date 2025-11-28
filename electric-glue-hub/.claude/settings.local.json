@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python tests/test_trustcheck_simple.py:*)",
+      "Bash(python av_campaign_analyser/test_ui_components.py:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

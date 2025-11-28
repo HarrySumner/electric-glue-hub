@@ -1,0 +1,10 @@
+{
+  "calls": [],
+  "summary": {
+    "total_calls": 0,
+    "total_tokens": 0,
+    "total_cost": 0.0,
+    "by_provider": {},
+    "by_operation": {}
+  }
+}

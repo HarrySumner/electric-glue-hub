@@ -1,17 +1,23 @@
 # Core Dependencies
-streamlit>=1.30.0
+streamlit>=1.32.0
 pandas>=2.0.0
 numpy>=1.24.0
 matplotlib>=3.7.0
 scipy>=1.10.0
 statsmodels>=0.14.0
+plotly>=5.18.0
 
 # Bayesian Analysis
 pymc>=5.0.0
 
-# LLM Integration (Optional - falls back to rule-based if not available)
+# LLM Integration
+anthropic>=0.25.0
 openai>=1.0.0
-anthropic>=0.8.0
+
+# File Format Support
+openpyxl>=3.1.0  # Excel (.xlsx) file support
+xlrd>=2.0.1      # Legacy Excel (.xls) support
 
 # Utilities
 python-dotenv>=1.0.0
+requests>=2.31.0

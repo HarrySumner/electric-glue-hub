@@ -35,6 +35,15 @@ from qa_models import (
 )
 from qa_prompts import QA_SYSTEM_PROMPT, get_validation_prompt
 
+# Import mathematical validator for TrustCheck
+sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
+try:
+    from mathematical_validator import MathematicalValidator, FlagSeverity
+    MATH_VALIDATOR_AVAILABLE = True
+except ImportError:
+    MATH_VALIDATOR_AVAILABLE = False
+    logger.warning("Mathematical validator not available. Skipping rules-based validation.")
+
 
 class QAHousekeepingAgent:
     """
@@ -256,6 +265,138 @@ class QAHousekeepingAgent:
                         recommendation="Fix QA validation system before showing outputs to users"
                     )
                 ],
+                validation_timestamp=datetime.now().isoformat()
+            )
+
+    def validate_campaign_data(
+        self,
+        campaign_data: Dict,
+        output_content: Optional[str] = None
+    ) -> ValidationResult:
+        """
+        Validate campaign data using mathematical validator FIRST, then LLM validation.
+
+        This is part of TrustCheck - catches synthetic/fabricated data before LLM sees it.
+
+        Parameters
+        ----------
+        campaign_data : dict
+            Campaign metrics: impressions, clicks, conversions, CTR, etc.
+        output_content : str, optional
+            Narrative output to validate against data
+
+        Returns
+        -------
+        ValidationResult
+            Validation decision with mathematical and LLM validation results
+        """
+        logger.info("Running mathematical validation on campaign data...")
+
+        # PHASE 1: Mathematical validation (rules-based, no LLM)
+        math_issues = []
+        if MATH_VALIDATOR_AVAILABLE:
+            math_validator = MathematicalValidator()
+            math_flags = math_validator.validate_report(campaign_data)
+
+            # Convert mathematical flags to ValidationIssues
+            for flag in math_flags:
+                # Map severity
+                if flag.severity == FlagSeverity.RED:
+                    severity = IssueSeverity.CRITICAL
+                elif flag.severity == FlagSeverity.AMBER:
+                    severity = IssueSeverity.HIGH
+                else:
+                    severity = IssueSeverity.LOW
+
+                math_issues.append(ValidationIssue(
+                    severity=severity,
+                    issue_type=IssueType.STATISTICAL_INVALID,
+                    description=flag.issue,
+                    location=flag.field,
+                    evidence=f"Expected: {flag.expected}, Actual: {flag.actual}",
+                    recommendation=flag.recommendation
+                ))
+
+            math_summary = math_validator.get_summary()
+            logger.info(f"Mathematical validation: {math_summary['status']}")
+
+            # If critical mathematical errors found, BLOCK immediately
+            if not math_summary['passed']:
+                logger.error(f"BLOCKED: {math_summary['red_flags']} critical mathematical errors")
+                return ValidationResult(
+                    decision=ValidationDecision.BLOCK,
+                    issues=math_issues,
+                    validation_timestamp=datetime.now().isoformat(),
+                    fix_recommendations=[
+                        "Fix mathematical inconsistencies in campaign data",
+                        "Verify data source and calculation methods",
+                        "Do not proceed with LLM validation until data is corrected"
+                    ]
+                )
+
+        # PHASE 2: LLM validation (only if mathematical validation passed or not available)
+        if output_content and self.anthropic_api_key:
+            logger.info("Running LLM validation on narrative output...")
+            try:
+                # Create validation prompt with campaign data
+                validation_prompt = f"""Validate the following campaign analysis narrative against the source data.
+
+**Source Campaign Data:**
+{json.dumps(campaign_data, indent=2)}
+
+**Narrative Output to Validate:**
+{output_content}
+
+Check for:
+1. Numbers match source data exactly
+2. No fabricated metrics or statistics
+3. Logical consistency of interpretations
+4. Proper attribution of all claims
+
+Provide validation in JSON format with issues array."""
+
+                validation_response = self._call_validation_api(validation_prompt)
+                llm_result = self._parse_validation_response(validation_response)
+
+                # Combine mathematical and LLM issues
+                all_issues = math_issues + llm_result.issues
+
+                # Determine final decision
+                if any(i.severity == IssueSeverity.CRITICAL for i in all_issues):
+                    decision = ValidationDecision.BLOCK
+                elif len(all_issues) > 0:
+                    decision = ValidationDecision.WARN
+                else:
+                    decision = ValidationDecision.APPROVE
+
+                return ValidationResult(
+                    decision=decision,
+                    issues=all_issues,
+                    validation_timestamp=datetime.now().isoformat(),
+                    fix_recommendations=llm_result.fix_recommendations
+                )
+
+            except Exception as e:
+                logger.error(f"LLM validation failed: {e}")
+                # Return mathematical validation result only
+                if math_issues:
+                    return ValidationResult(
+                        decision=ValidationDecision.WARN,
+                        issues=math_issues,
+                        validation_timestamp=datetime.now().isoformat()
+                    )
+
+        # No output content or no API key - return mathematical validation result
+        if math_issues:
+            decision = ValidationDecision.WARN if all(i.severity != IssueSeverity.CRITICAL for i in math_issues) else ValidationDecision.BLOCK
+            return ValidationResult(
+                decision=decision,
+                issues=math_issues,
+                validation_timestamp=datetime.now().isoformat()
+            )
+        else:
+            return ValidationResult(
+                decision=ValidationDecision.APPROVE,
                 validation_timestamp=datetime.now().isoformat()
             )
 
